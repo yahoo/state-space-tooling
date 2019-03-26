@@ -1,5 +1,7 @@
 # State Space, Tooling
 This repository contains the operability tooling for the State Space implementation of the IAB PrivacyChain Reference Design.
+This is tooling for State Space Implementation of the IAB PrivacyChain Reference Design.
+It comprises loaders, dumpers and debugging machinery, nearly all of which are cli-oriented and script-kid focused.
 
 ![banner](logo.png)
 

@@ -1,0 +1,8 @@
+#!/bin/sh
+source ${0%/*}/rigging.sh || exit 70
+(
+    # there is no such record
+    $exe --dry-run get f3219f81-8035-4b39-b723-3da7d488eecf
+) >& $output
+difference $golden $output
+successful

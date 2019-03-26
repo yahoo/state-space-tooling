@@ -1,0 +1,8 @@
+#!/bin/sh
+source ${0%/*}/rigging.sh || exit 70
+(
+    # no options and no words
+    $exe
+) >& $output
+difference $golden $output
+successful

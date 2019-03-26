@@ -1,0 +1,8 @@
+#!/bin/sh
+source ${0%/*}/rigging.sh || exit 70
+(
+    # there is no such record
+    $exe --dry-run history 242bda43-0a54-4d1a-ab3a-cb89f8edc3d0
+) >& $output
+difference $golden $output
+successful

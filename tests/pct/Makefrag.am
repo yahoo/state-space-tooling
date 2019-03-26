@@ -1,0 +1,20 @@
+tests_pct_TESTS = \
+  tests/pct/dryrun.usage.test \
+  tests/pct/dryrun.help.test \
+  tests/pct/dryrun.h.test \
+  \
+  tests/pct/dryrun.version.test \
+  tests/pct/dryrun.V.test \
+  \
+  tests/pct/dryrun.get.test \
+  tests/pct/dryrun.set.test \
+  tests/pct/dryrun.history.test \
+  \
+  tests/pct/run.empty.test \
+  tests/pct/run.usage.test \
+  tests/pct/run.version.test \
+  \
+  tests/pct/run.get.001.test \
+  tests/pct/run.set.001.test \
+  tests/pct/run.history.001.test \
+  $(end)

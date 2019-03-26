@@ -1,0 +1,22 @@
+# Not so obviously, this is a GNU -*- Makefile -*- which is included by automake, not by GNU make
+# Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+bin_pct = bin/pct
+bin_pct_LDADD = \
+  $(lib_libsst_la) \
+  $(end)
+bin_pct_LDADD = \
+  -liab-privacychain \
+  $(end)
+# Reminder: autotools does not put $(AM_LDFLAGS) into bin_pct_LDFLAGS, like it does with CPPFLAGS and CXXFLAGS
+bin_pct_LDFLAGS = $(PACKAGE_LDFLAGS_SET)
+bin_pct_MODULES = $(call TF_SOURCEStoMODULES, $(bin_pct_SOURCES))
+bin_pct_SOURCES = \
+  obj/src/app/pct/main.cpp \
+  obj/src/app/pct/namespace.cpp \
+  $(end)
+$(scold_cxxdir)/app/pct/dependencies.mk:
+	$(TF_V_DIS) $(call TF_DISAGGREGATE, $(bin_pct_SOURCES))
+	$(TF_V_DONE) test -e $@
+include $(scold_cxxdir)/app/pct/dependencies.mk
+clean-dependencies::
+	rm -f $(scold_cxxdir)/app/pct/dependencies.mk
