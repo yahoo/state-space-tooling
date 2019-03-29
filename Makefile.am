@@ -62,12 +62,14 @@ clean-dependencies::
 clean-local:: clean-dependencies
 
 include src/sst/Makefrag.am
+include src/app/pck/Makefrag.am
 include src/app/pct/Makefrag.am
 include src/tests/unit/Makefrag.am
 include src/want/Makefrag.am
 
 bin_PROGRAMS = \
   $(bin_pct) \
+  $(bin_pck) \
   $(end)
 sbin_PROGRAMS = $(none)
 lib_LTLIBRARIES = \

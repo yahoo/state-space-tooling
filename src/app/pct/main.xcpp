@@ -2,19 +2,187 @@
 // Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
 #divert <hpp>
 #import c.argv
+#import c.const_vector
+#import std.string
 #import sys.exits.Code
 namespace app::pct {
+  using Argv = c::const_vector;
   auto main(c::argv) -> sys::exits::Code;
+  auto get(Argv) -> sys::exits::Code;
+  auto set(Argv) -> sys::exits::Code;
+  auto history(Argv) -> sys::exits::Code;
+  auto unknown(std::string const &) -> sys::exits::Code;
+  auto usage(std::ostream &, sys::exits::Code) -> sys::exits::Code;
+  auto version(std::ostream &) -> sys::exits::Code;
+  auto invalid(std::string const &NAME, unsigned, Argv const &) -> sys::exits::Code;
 }
 #endiv
 #divert <cpp>
 auto main(int cc, char *vv[]) -> int {
   return app::pct::main(c::argv(cc, vv));
 }
+#import c.rest
+#import std.cerr
 #import std.cout
+#import std.exception
+#import std.string
+#import std.string_literals
 #import sys.exits.constants
-auto app::pct::main(c::argv av) -> sys::exits::Code {
-  std::cout << "Unimplemented\n";
+#import nonstd.exception.Unreachable
+using namespace std::string_literals;
+auto app::pct::main(c::argv av) -> sys::exits::Code try {
+  std::string NAME = av.front();
+  auto vv = c::rest(av);
+  for ( ; vv.size(); vv=c::rest(vv)) {
+    std::string const option = vv.front();
+    if (option.empty() || '-' != option.front()) {
+      break;
+    }
+    if (false) {
+    } else if ("--usage"s == option || "--help"s == option || "-h"s == option) {
+      return usage(std::cout, sys::exits::OK);
+    } else if ("--version"s == option || "-V"s == option) {
+      return usage(std::cout, sys::exits::OK);
+    } else if ("--dryrun"s == option || "--dry-run"s == option || "-y"s == option) {
+#warning WRITETHIS --dryrun
+    } else if ("--warnings"s == option || "--warning"s == option || "-w"s == option) {
+#warning WRITETHIS --warnings
+    } else if ("--quiet"s == option || "-q"s == option) {
+#warning WRITETHIS --quiet
+    } else if ("--verbose"s == option || "-v"s == option) {
+#warning WRITETHIS --verbose
+    } else if ("--debug"s == option || "-d"s == option) {
+#warning WRITETHIS --debug
+    } else {
+      std::cerr << "error: unknown option " << option << '\n';
+      return sys::exits::CONFIG;
+    }
+  }
+  if (0 == vv.size()) {
+    std::cerr << NAME << ": error, no command (nothing to do)\n";
+    return sys::exits::FAIL;
+  }
+  if ("set"s == vv.front()) {
+    auto const HOWMANY = 3u;
+    if (HOWMANY == vv.size()) {
+      return set(c::rest(vv));
+    } else {
+      return invalid(NAME, HOWMANY, vv);
+    }
+  } else if ("get"s == vv.front()) {
+    auto const HOWMANY = 2u;
+    if (HOWMANY == vv.size()) {
+      return get(c::rest(vv));
+    } else {
+      return invalid(NAME, HOWMANY ,vv);
+    }
+  } else if ("history"s == vv.front()) {
+    auto const HOWMANY = 2u;
+    if (HOWMANY == vv.size()) {
+      return history(c::rest(vv));
+    } else {
+      return invalid(NAME, HOWMANY, vv);
+    }
+  } else {
+    std::cerr << NAME << ": error, unknown command " << /*format::q*/ vv.front() << '\n';
+    return sys::exits::FAIL;
+  }
+  throw nonstd::exception::Unreachable{__FUNCTION__, __FILE__, __LINE__};
+} catch (std::exception const &e) {
+  std::cerr << "pct: unexpected exception " << e.what() << '\n';
+  return sys::exits::SOFTWARE;
+}
+#import std.length_error
+#import iab.privacychain.api
+#import iab.privacychain.Key
+#import iab.privacychain.record.Visitor
+#import std.visit
+auto app::pct::get(Argv vv) -> sys::exits::Code {
+  if (1 != vv.size()) { throw std::length_error{"short"}; } // this is the programmer's error (your error)
+  using namespace iab::privacychain::api;
+  namespace api1 = iab::privacychain::api::v1;
+  namespace key = iab::privacychain::key;
+  Operation<QUERY>::Context ctx;
+  Operation<QUERY> op{ctx};
+  auto from = key::from_string(vv.front());
+  if (!ok(from)) {
+    std::cerr << "error: " << error_code(from).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  auto got = api1::get(op, value(from));
+  if (!ok(got)) {
+    std::cerr << "error: " << error_code(got).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  namespace record = iab::privacychain::record;
+  auto &out{std::cout};
+  auto const visitor = record::Visitor{[&out](record::Bytes const &) { out << "bytes"; },
+                                       [&out](record::Json const &)  { out << "JSON"; },
+                                       [&out](record::tcf::V1 const &) { out << "TCF.v1"; },
+                                       [&out](auto const &)  { out << "unknown record type"; }};
+  std::visit(visitor, value(got));
   return sys::exits::OK;
+}
+auto app::pct::set(Argv vv) -> sys::exits::Code {
+  if (2 != vv.size()) { throw std::length_error{"short"}; }
+  std::cerr << "set is unimplemented";
+  return sys::exits::SOFTWARE;
+}
+#import iab.privacychain.History
+auto app::pct::history(Argv vv) -> sys::exits::Code {
+  if (1 != vv.size()) { throw std::length_error{"short"}; }
+  using namespace iab::privacychain::api;
+  namespace api1 = iab::privacychain::api::v1;
+  namespace key = iab::privacychain::key;
+  Operation<QUERY>::Context ctx;
+  Operation<QUERY> op{ctx};
+  auto from = key::from_string(vv.front());
+  if (!ok(from)) {
+    std::cerr << "error: " << error_code(from).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  auto got = api1::history(op, value(from));
+  if (!ok(got)) {
+    std::cerr << "error: " << error_code(got).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  auto &out{std::cout};
+  for (auto const &_ : value(got)) {
+#warning WRITETHIS out << format(tx) << '\n';
+    out << "transaction\n";
+  }
+  return sys::exits::OK;
+}
+auto app::pct::unknown(std::string const &cmd) -> sys::exits::Code {
+  std::cerr << "error: unknown subcommand '" << /*format::q*/ cmd << "'\n";
+  return sys::exits::CONFIG;
+}
+auto app::pct::usage(std::ostream &out, sys::exits::Code code) -> sys::exits::Code {
+  out << ("usage: pct [...options...] command ...arguments...\n"
+          "\n"
+          "options:\n"
+          "  --usage, --help                       show this message\n"
+          "  --version                             exhibit the version and quit\n"
+          "  --warnings, --warning                 warnings mode\n"
+          "  --quiet                               Shut. Up.  is independent of --verbose\n"
+          "  --verbose                             verbose mode\n"
+          "  --dryrun, --dry-run                   dry run, do not do anything\n"
+          "  --debug                               debug mode (you should not need this)\n"
+          "\n"
+          "command\n"
+          "  get KEY\n"
+          "  set KEY VALUE\n"
+          "  history KEY\n")
+          ;
+  return code;
+}
+#include "config.h" // PACKAGE_VERSION as a #define (yuk!)
+auto app::pct::version(std::ostream &out) -> sys::exits::Code {
+  out << "pct: version " << PACKAGE_VERSION << '\n';
+  return sys::exits::OK;
+}
+auto app::pct::invalid(std::string const &NAME, unsigned count, Argv const &vv) -> sys::exits::Code {
+  std::cerr << NAME << ": error, inappropriate number of arguments for " << vv.front() << ", expected " << count << " but found " << vv.size() << '\n';
+  return sys::exits::CONFIG;
 }
 #endiv

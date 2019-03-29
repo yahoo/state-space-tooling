@@ -61,7 +61,7 @@ if (/^[Uu]sage: .*/) { exit 0; }
 
 # used in dryrun.set.test and run.set.001.test
 function generate_record() {
-cat | base64 <<EOF
+cat <<EOF | base64
 {
     "id": "eda350f7-9bf4-4149-81f8-f4cee6d6ef21",
     "consentType" : "freely-given",
@@ -75,7 +75,10 @@ EOF
 
 function generate_key() {
     # FIXTHIS -- use ../../bin/pck to generate an expected value here
-    echo 'rabinpoly::fingerprint("eda350f7-9bf4-4149-81f8-f4cee6d6ef21")' 
+    local plaintext='rabinpoly::fingerprint("eda350f7-9bf4-4149-81f8-f4cee6d6ef21")'
+    # ../../bin/pck "$plaintext"
+    local fingerprint=5d6204b0e73d8279
+    echo $fingerprint
 }
 
 trap cleanup EXIT

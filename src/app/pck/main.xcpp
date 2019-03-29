@@ -1,0 +1,40 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <hpp>
+#import c.argv
+#import sys.exits.Code
+namespace app::pct {
+  auto main(c::argv) -> sys::exits::Code;
+}
+#endiv
+#divert <cpp>
+auto main(int cc, char *vv[]) -> int {
+  return app::pct::main(c::argv(cc, vv));
+}
+#import c.rest
+#import std.cout
+#import std.cerr
+#import sys.exits.constants
+#import rabinpoly.fingerprint
+auto app::pct::main(c::argv av) -> sys::exits::Code try {
+  auto NAME = av.front();
+  auto verbose_mode = false;
+  auto warning = false;
+  for (std::string word : c::rest(av)) {
+    if (word.empty()) {
+      std::cerr << NAME << ": warning, empty identifier is ignored (you cannot have an identifier like that)\n";
+    } else if ('-' == word.front()) {
+      std::cerr << NAME << ": warning, there are no options (nominate identifiers with --identifier=IDENTIFIER)\n";
+      warning = true;
+    } else {
+      std::cout << format(rabinpoly::fingerprint(word)) << '\n';
+    }
+  }
+  if (verbose_mode) {
+    std::cerr << NAME << ": info, there were warnings\n";
+  }
+  return sys::exits::OK;
+} catch (...) {
+  return sys::exits::SOFTWARE;
+}
+#endiv
