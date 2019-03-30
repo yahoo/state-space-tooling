@@ -14,7 +14,7 @@ dnl These options are also in the Makefile.am in AUTOMAKE_OPTIONS
 dnl AM_INIT_AUTOMAKE([no-define subdir-objects foreign])
 AM_SILENT_RULES([yes])
 
-AC_CONFIG_SRCDIR([src/sst/namespace.xcpp])
+AC_CONFIG_SRCDIR([src/app/tooling/namespace.xcpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile lib/tests/config.sh])
@@ -49,6 +49,7 @@ TF_WITH_SUBSYSTEM([iab-privacychain-sdk], [], [The IAB PrivacyChain C++ Client-s
 # And mention these in $(DEVELOPMENT_AREAS) in Makefile.am
 TF_WITH_MODULE([json])
 TF_WITH_MODULE([nonstd])
+TF_WITH_MODULE([options])
 TF_WITH_MODULE([posix])
 TF_WITH_MODULE([rabinpoly])
 TF_WITH_MODULE([std])

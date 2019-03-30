@@ -2,9 +2,10 @@
 source ${0%/*}/rigging.sh || exit 70
 trap '' ERR
 (
-    # no options and no words
-    $exe
+    $exe --dry-run --msp /etc/hyperledger/fabric/admin/msp
 ) >& $output
-if 1 != $? ; then failing ; fi
+e=$?
+trap failure ERR
+test 1 == $e
 difference $golden $output
 successful

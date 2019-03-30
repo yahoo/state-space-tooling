@@ -3,20 +3,20 @@
 #divert <hpp>
 #import c.argv
 #import sys.exits.Code
-namespace app::pct {
+namespace app::keying {
   auto main(c::argv) -> sys::exits::Code;
 }
 #endiv
 #divert <cpp>
 auto main(int cc, char *vv[]) -> int {
-  return app::pct::main(c::argv(cc, vv));
+  return app::keying::main(c::argv(cc, vv));
 }
 #import c.rest
 #import std.cout
 #import std.cerr
 #import sys.exits.constants
 #import rabinpoly.fingerprint
-auto app::pct::main(c::argv av) -> sys::exits::Code try {
+auto app::keying::main(c::argv av) -> sys::exits::Code try {
   auto NAME = av.front();
   auto verbose_mode = false;
   auto warning = false;
@@ -24,7 +24,7 @@ auto app::pct::main(c::argv av) -> sys::exits::Code try {
     if (word.empty()) {
       std::cerr << NAME << ": warning, empty identifier is ignored (you cannot have an identifier like that)\n";
     } else if ('-' == word.front()) {
-      std::cerr << NAME << ": warning, there are no options (nominate identifiers with --identifier=IDENTIFIER)\n";
+      std::cerr << NAME << ": warning, there are no options (nominate identifiers with --\n";
       warning = true;
     } else {
       std::cout << format(rabinpoly::fingerprint(word)) << '\n';

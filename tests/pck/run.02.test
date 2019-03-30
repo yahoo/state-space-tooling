@@ -1,0 +1,7 @@
+#!/bin/sh
+source ${0%/*}/rigging.sh || exit 70
+(
+    $exe apple banana cherry dog eagle frog goat harpie idiot jackal kangaroo llama marmot narwal ocelot possum quail rat seal turkey usufruct vole xylotyl yak zebra
+) >& $output
+difference $golden $output
+successful

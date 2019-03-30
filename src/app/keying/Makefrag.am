@@ -3,20 +3,18 @@
 bin_pck = bin/pck
 bin_pck_LDADD = \
   $(lib_libsst_la) \
-  $(end)
-bin_pck_LDADD = \
   -liab-privacychain \
   $(end)
 # Reminder: autotools does not put $(AM_LDFLAGS) into bin_pck_LDFLAGS, like it does with CPPFLAGS and CXXFLAGS
 bin_pck_LDFLAGS = $(PACKAGE_LDFLAGS_SET)
 bin_pck_MODULES = $(call TF_SOURCEStoMODULES, $(bin_pck_SOURCES))
 bin_pck_SOURCES = \
-  obj/src/app/pck/main.cpp \
-  obj/src/app/pck/namespace.cpp \
+  obj/src/app/keying/main.cpp \
+  obj/src/app/keying/namespace.cpp \
   $(end)
-$(scold_cxxdir)/app/pck/dependencies.mk:
+$(scold_cxxdir)/app/keying/dependencies.mk:
 	$(TF_V_DIS) $(call TF_DISAGGREGATE, $(bin_pck_SOURCES))
 	$(TF_V_DONE) test -e $@
-include $(scold_cxxdir)/app/pck/dependencies.mk
+include $(scold_cxxdir)/app/keying/dependencies.mk
 clean-dependencies::
-	rm -f $(scold_cxxdir)/app/pck/dependencies.mk
+	rm -f $(scold_cxxdir)/app/keying/dependencies.mk

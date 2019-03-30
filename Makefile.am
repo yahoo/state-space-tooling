@@ -17,13 +17,14 @@ AUTOMAKE_OPTIONS = no-define subdir-objects foreign
 default:
 # also configure.ac and TF_SUBMODULE_CONFIGURE
 # SUBDIRS = @subdirs@
-include @temerarious_flagship_datadir@/am/build.mk
+include @temerarious_flagship_datadir@/am/build.am
 
 # These match with TF_WITH_MODULE in configure.ac
 # You do not need them unless you are doing co-development of these packages *with* PrivacyChain SDK C++
 DEVELOPMENT_AREAS = \
   $(module_json_prefix) \
   $(module_nonstd_prefix) \
+  $(module_options_prefix) \
   $(module_posix_prefix) \
   $(module_rabinpoly_prefix) \
   $(module_std_prefix) \
@@ -50,10 +51,9 @@ INSTALLATION_AREAS = \
 
 default: all
 
-module_SOURCE_SET = $(none)
-module_BB_SOURCE_SET = \
-  $(warning module_BB_SOURCE_SET is deprecated, instead use module_SOURCE_SET) \
-  $(module_SOURCE_SET) \
+module_SOURCE_SET = \
+  $(lib_libsst_la_SOURCES) \
+  $(lib_libwant_la_SOURCES) \
   $(end)
 
 .PHONY: clean-local mostlyclean-local distclean-local
@@ -62,8 +62,8 @@ clean-dependencies::
 clean-local:: clean-dependencies
 
 include src/sst/Makefrag.am
-include src/app/pck/Makefrag.am
-include src/app/pct/Makefrag.am
+include src/app/keying/Makefrag.am
+include src/app/tooling/Makefrag.am
 include src/tests/unit/Makefrag.am
 include src/want/Makefrag.am
 
@@ -83,9 +83,16 @@ check_PROGRAMS = \
   $(end)
 
 include tests/unit/Makefrag.am
+include tests/pck/Makefrag.am
 include tests/pct/Makefrag.am
+XFAIL_TESTS = \
+  $(tests_unit_XFAIL_TESTS) \
+  $(tests_pck_XFAIL_TESTS) \
+  $(tests_pct_XFAIL_TESTS) \
+  $(end)
 TESTS = \
   $(tests_unit_TESTS) \
+  $(tests_pck_TESTS) \
   $(tests_pct_TESTS) \
   $(end)
 

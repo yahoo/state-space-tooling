@@ -1,3 +1,12 @@
+tests_pct_XFAIL_TESTS = \
+  tests/pct/dryrun.get.test \
+  tests/pct/dryrun.set.test \
+  tests/pct/dryrun.history.test \
+  \
+  tests/pct/run.get.001.test \
+  tests/pct/run.set.001.test \
+  tests/pct/run.history.001.test \
+  $(end)
 tests_pct_TESTS = \
   tests/pct/dryrun.usage.test \
   tests/pct/dryrun.help.test \
@@ -6,15 +15,26 @@ tests_pct_TESTS = \
   tests/pct/dryrun.version.test \
   tests/pct/dryrun.V.test \
   \
-  tests/pct/dryrun.get.test \
-  tests/pct/dryrun.set.test \
-  tests/pct/dryrun.history.test \
+  tests/pct/dryrun.channel.test \
+  tests/pct/dryrun.channelID.test \
+  tests/pct/dryrun.c.test \
+  \
+  tests/pct/dryrun.chaincode.test \
+  tests/pct/dryrun.name.test \
+  tests/pct/dryrun.n.test \
+  \
+  tests/pct/dryrun.msp.test \
+  \
+  tests/pct/dryrun.unknown.test \
   \
   tests/pct/run.empty.test \
   tests/pct/run.usage.test \
   tests/pct/run.version.test \
   \
-  tests/pct/run.get.001.test \
-  tests/pct/run.set.001.test \
-  tests/pct/run.history.001.test \
+  $(tests_pct_XFAIL_TESTS) \
   $(end)
+
+tests_pct_TESTS_DECLARED = $(tests_pct_TESTS)
+tests_pct_TESTS_OBSERVED = $(wildcard tests/pct/*.test)
+tests_pct_TESTS_ORPHANED = $(filter-out $(tests_pct_TESTS_DECLARED), $(tests_pct_TESTS_OBSERVED))
+$(if $(tests_pct_TESTS_ORPHANED), $(error orphaned tests $(tests_pct_TESTS_ORPHANED)))

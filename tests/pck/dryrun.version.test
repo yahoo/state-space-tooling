@@ -1,10 +1,7 @@
 #!/bin/sh
 source ${0%/*}/rigging.sh || exit 70
-trap '' ERR
 (
-    # no options and no words
-    $exe
+    $exe --dry-run --version
 ) >& $output
-if 1 != $? ; then failing ; fi
 difference $golden $output
 successful

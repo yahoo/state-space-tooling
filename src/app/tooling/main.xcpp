@@ -1,0 +1,320 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <hpp>
+#import c.argv
+#import c.const_vector
+#import std.string
+#import sys.exits.Code
+#import app.tooling.Configuration
+namespace app::tooling {
+  using Argv = c::const_vector;
+  auto main(c::argv) -> sys::exits::Code;
+  auto get(Configuration &, Argv) -> sys::exits::Code;
+  auto set(Configuration &, Argv) -> sys::exits::Code;
+  auto history(Configuration &, Argv) -> sys::exits::Code;
+  auto unknown(Configuration const &, std::string const &command) -> sys::exits::Code;
+  auto usage(Configuration const &, std::ostream &, sys::exits::Code) -> sys::exits::Code;
+  auto version(Configuration const &, std::ostream &) -> sys::exits::Code;
+  auto invalid(Configuration const &, unsigned, Argv const &) -> sys::exits::Code;
+  auto fixenv(Configuration const &) -> void;
+  namespace env {
+    auto fixPATH(Configuration const &) -> void;
+    enum Override { DEFAULT, OVERRIDE };
+    auto setMSP(Configuration const &, std::string value, Override) -> void;
+  }
+}
+#endiv
+#divert <cpp>
+auto main(int cc, char *vv[]) -> int {
+  return app::tooling::main(c::argv(cc, vv));
+}
+#import c.rest
+#import std.cerr
+#import std.cout
+#import std.exception
+#import std.string
+#import std.string_literals
+#import sys.exits.constants
+#import nonstd.exception.Unreachable
+#import options.logging // module-options-devel >= 0.16.0? use cli::logging or such
+#import hyperledger.fabric.tls.from_string.Endpoints
+using namespace std::string_literals;
+auto app::tooling::main(c::argv av) -> sys::exits::Code try {
+  Configuration cfg{Configuration::Program{av.front()}};
+  fixenv(cfg);
+  auto vv = c::rest(av);
+  auto ecode = sys::exits::OK;
+  for ( ; vv.size(); vv=c::rest(vv)) {
+    std::string const option = vv.front();
+    if (option.empty() || '-' != option.front()) {
+      break;
+    }
+    if (false) {
+    } else if ("--"s == option) {
+      vv = c::rest(vv);
+      break;
+    } else if ("--usage"s == option || "--help"s == option || "-h"s == option) {
+      return usage(cfg, std::cout, sys::exits::OK);
+    } else if ("--version"s == option || "-V"s == option) {
+      return version(cfg, std::cout);
+    } else if ("--dryrun"s == option || "--dry-run"s == option || "-y"s == option) {
+      cfg.dry_run_mode = true;
+    } else if ("--warnings"s == option || "--warning"s == option || "-w"s == option) {
+      cfg.warning_mode = true;
+    } else if ("--quiet"s == option || "-q"s == option) {
+      cfg.quiet_mode = true;
+    } else if ("--verbose"s == option || "-v"s == option) {
+      cfg.verbose_mode = true;
+    } else if ("--debug"s == option || "-d"s == option) {
+      cfg.debug_mode = true;
+    } else if ("--channel"s == option || "--channelID"s == option || "-c"s == option) {
+      // --channel is our invention; Hyperledger Fabric v1.4 requires --channelID
+      // -c is our invention, Hyperledger Fabric v1.4 uses -c for --ctor" which we subsume in the remaining args
+      if (vv.size() < 2) {
+        error(cfg) << option << " requires a value following it\n";
+        break;
+      }
+      vv = c::rest(vv);
+      cfg.context.channelID = vv.front(); // check for invalid channel names later
+      verbose(cfg) << "channel " << cfg.context.channelID << '\n';
+    } else if ("--chaincode"s == option || "--name"s == option || "-n"s == option) {
+      // --chaincode is our invention; Hyperledger Fabric v1.4 requires --name
+      if (vv.size() < 2) {
+        error(cfg) << option << " requires a value following it\n";
+        break;
+      }
+      vv = c::rest(vv);
+      cfg.context.name = vv.front(); // check for invalid chaincode names later
+      verbose(cfg) << "chaincode " << cfg.context.name << '\n';
+    } else if ("--peer"s == option || "--peers"s == option || "--peerAddresses"s == option) {
+      // --peer, --peers is our invention; Hyperledger Fabric v1.4 requires --peerAddresses (no short option is documented)
+      if (vv.size() < 2) {
+        error(cfg) << option << " requires a value following it\n";
+        break;
+      }
+      vv = c::rest(vv);
+      namespace tls = hyperledger::fabric::tls;
+      auto es = tls::from_string<tls::Endpoints>(vv.front()); // this does some parsing of the endpoint-commalist
+      if (!ok(es)) {
+        error(cfg) << option << " invalid peer endpoints because " << error_code(es).message() << '\n';
+        break;
+      }
+      cfg.context.peers.endpoints = value(es);
+      verbose(cfg) << "peers endpoints " << format(cfg.context.peers.endpoints) << '\n';
+    } else if ("--msp"s == option) {
+      // --msp is our invention; Hyperledger Fabric v1.4 requires the use of the CORE_PEER_MSPCONFIGPATH ENVIRONMENT variable
+      if (vv.size() < 2) {
+        error(cfg) << option << " requires a value following it\n";
+        break;
+      }
+      vv = c::rest(vv);
+      auto msppath = vv.front();
+      env::setMSP(cfg, msppath, env::Override::OVERRIDE);
+      verbose(cfg) << "msp " << msppath << '\n';
+    } else {
+      if ('-' == option.front() && std::string::npos != option.find('=')) {
+        notice(cfg) << "the PrivacyChain and Hyperledger Fabric options do not use '=' in options\n";
+        notice(cfg) << "probably you need to use a space and the value in the subsequent argument\n";
+      }
+      error(cfg) << "unknown option " << option << '\n';
+      return sys::exits::CONFIG;
+    }
+  }
+  if (0 == vv.size()) {
+    error(cfg) << "no command (nothing to do)\n";
+    ecode &= sys::exits::FAIL;
+  }
+  if (cfg.context.channelID.empty()) {
+    error(cfg) << "there is no channelID, perhaps --channelID is missing?\n";
+    ecode &= sys::exits::FAIL;
+  }
+  if (cfg.context.name.empty()) {
+    error(cfg) << "there is no chaincode name, perhaps --name is missing?\n";
+    ecode &= sys::exits::FAIL;
+  }
+  if (cfg.context.peers.endpoints.empty()) {
+    warning(cfg) << "there are no peers to contact, perhaps --peersAddresses is missing?\n";
+    // ecode &= sys::exits::FAIL;
+  }
+  if (!ok(ecode)) {
+    return ecode;
+  }
+  if ("set"s == vv.front()) {
+    auto const HOWMANY = 3u;
+    if (HOWMANY == vv.size()) {
+      return set(cfg, c::rest(vv));
+    } else {
+      return invalid(cfg, HOWMANY, vv);
+    }
+  } else if ("get"s == vv.front()) {
+    auto const HOWMANY = 2u;
+    if (HOWMANY == vv.size()) {
+      return get(cfg, c::rest(vv));
+    } else {
+      return invalid(cfg, HOWMANY ,vv);
+    }
+  } else if ("history"s == vv.front()) {
+    
+    auto const HOWMANY = 2u;
+    if (HOWMANY == vv.size()) {
+      return history(cfg, c::rest(vv));
+    } else {
+      return invalid(cfg, HOWMANY, vv);
+    }
+  } else {
+    error(cfg) << "unknown command " << /*format::q*/ vv.front() << '\n';
+    return sys::exits::FAIL;
+  }
+  throw nonstd::exception::Unreachable{__FUNCTION__, __FILE__, __LINE__};
+} catch (std::exception const &e) {
+  std::cerr << "tooling: unexpected exception " << e.what() << '\n';
+  return sys::exits::SOFTWARE;
+}
+#import std.length_error
+#import iab.privacychain.api
+#import iab.privacychain.Key
+#import iab.privacychain.record.Visitor
+#import std.visit
+#import std.string_view
+auto app::tooling::get(Configuration &cfg, Argv vv) -> sys::exits::Code {
+  if (1 != vv.size()) { throw std::length_error{"short"}; } // this is the programmer's error (your error)
+  using namespace iab::privacychain::api;
+  namespace api1 = iab::privacychain::api::v1;
+  namespace key = iab::privacychain::key;
+  Operation<INVOKE> op{cfg.context};
+  auto from = key::from_string(vv.front());
+  if (!ok(from)) {
+    error(cfg) << error_code(from).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  if (cfg.dry_run_mode) {
+    notice(cfg) << "skipping 'get' in dry-run mode\n";
+    return sys::exits::OK;
+  }
+  auto got = api1::get(op, value(from));
+  if (!ok(got)) {
+    error(cfg) << error_code(got).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  namespace record = iab::privacychain::record;
+  auto &out{std::cout};
+  auto const visitor = record::Visitor{[&out](record::Bytes const &b) { out << std::string_view{/*DANGEROUS DANGEROUS DANGEROUS*/ reinterpret_cast<char const *>(b.data()), b.size()}; },
+                                       [&out](record::Json const &)  { out << "JSON"; },
+                                       [&out](record::tcf::V1 const &) { out << "TCF.v1"; },
+                                       [&out](auto const &)  { out << "unknown record type"; }};
+  std::visit(visitor, value(got));
+  return sys::exits::OK;
+}
+auto app::tooling::set(Configuration &cfg, Argv vv) -> sys::exits::Code {
+  if (2 != vv.size()) { throw std::length_error{"short"}; }
+  std::cerr << "set is unimplemented";
+  if (cfg.dry_run_mode) {
+    notice(cfg) << "skipping 'set' in dry-run mode\n";
+    return sys::exits::OK;
+  }
+  return sys::exits::SOFTWARE;
+}
+#import iab.privacychain.History
+auto app::tooling::history(Configuration &cfg, Argv vv) -> sys::exits::Code {
+  if (1 != vv.size()) { throw std::length_error{"short"}; }
+  using namespace iab::privacychain::api;
+  namespace api1 = iab::privacychain::api::v1;
+  namespace key = iab::privacychain::key;
+  Operation<INVOKE> op{cfg.context};
+  auto from = key::from_string(vv.front());
+  if (!ok(from)) {
+    error(cfg) << error_code(from).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  if (cfg.dry_run_mode) {
+    notice(cfg) << "skipping 'history' in dry-run mode\n";
+    return sys::exits::OK;
+  }
+  auto got = api1::history(op, value(from));
+  if (!ok(got)) {
+    error(cfg) << error_code(got).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  auto &out{std::cout};
+  for (auto const &_ : value(got)) {
+#warning WRITETHIS out << format(tx) << '\n';
+    out << "transaction\n";
+  }
+  return sys::exits::OK;
+}
+auto app::tooling::unknown(Configuration const &cfg, std::string const &cmd) -> sys::exits::Code {
+  error(cfg) << "unknown subcommand '" << /*format::q*/ cmd << "'\n";
+  return sys::exits::CONFIG;
+}
+auto app::tooling::usage(Configuration const &cfg, std::ostream &out, sys::exits::Code code) -> sys::exits::Code {
+  out << "usage: " << cfg.NAME
+      << (" [...options...] command ...arguments...\n"
+          "\n"
+          "Hyperledger (Fabric) Options:\n"
+          "  --channel=<name>                      a channel name\n"
+          "  --chaincode=<name>                    a chaincode name\n"
+          "  --peers=<endpoints>                   a comma-separated list of peer endpoints\n"
+          "                                        <endpoint> is a FQDN or FQDN:PORT or the address variant of such\n"
+          "  --msp=.../admin/msp                   path to the MSP certificate directory\n"
+          "                                        default: /etc/hyperledger/fabric/admin/msp\n" // [[FIXTHIS]]  constants like this in namspace defaults
+          "\n"
+          "General Options:\n"
+          "  --usage, --help                       show this message\n"
+          "  --version                             exhibit the version and quit\n"
+          "  --warnings, --warning                 warnings mode\n"
+          "  --quiet                               Shut. Up.  is independent of --verbose\n"
+          "  --verbose                             verbose mode\n"
+          "  --dryrun, --dry-run                   dry run, do not do anything\n"
+          "  --debug                               debug mode (you should not need this)\n"
+          "\n"
+          "Commands\n"
+          "  get KEY\n"
+          "  set KEY VALUE\n"
+          "  history KEY\n")
+          ;
+  return code;
+}
+#include "config.h" // PACKAGE_VERSION as a #define (yuk!)
+auto app::tooling::version(Configuration const &cfg, std::ostream &out) -> sys::exits::Code {
+  out << cfg.NAME << ": version " << PACKAGE_VERSION << '\n';
+  return sys::exits::OK;
+}
+auto app::tooling::invalid(Configuration const &cfg, unsigned count, Argv const &vv) -> sys::exits::Code {
+  error(cfg) << "inappropriate number of arguments for " << vv.front() << ", expected " << count << " but found " << vv.size() << '\n';
+  return sys::exits::CONFIG;
+}
+auto app::tooling::fixenv(Configuration const &cfg) -> void {
+  env::fixPATH(cfg);
+  env::setMSP(cfg, "/etc/hyperledger/fabric/admin/msp"s, env::Override::DEFAULT);
+}
+#import sys.posix.getenv
+#import sys.posix.setenv
+auto app::tooling::env::fixPATH(Configuration const &cfg) -> void {
+  auto path = []() -> std::string {
+                auto got = sys::posix::getenv<std::string>("PATH");
+                return !ok(got) ? ""s : value(std::move(got));
+              }();
+  // FIXTHIS ... be smarter about this ... only do this if it is *necessary*; and warn about it.
+  path += ":/opt/hyperledger/fabric/bin:/opt/iab/privacychain/bin";
+  auto varname = "PATH"s;
+  auto set = sys::posix::setenv(varname, path);
+  if (!ok(set)) {
+    // Just warn ... it should never happen and also we can continue on.
+    // Also PATH may be just fine already.
+    warning(cfg) << "could not modify " << varname << " to incorporate IAB PrivacyChain and Hyperledger Fabric because " << error_code(set).message() << '\n';
+  }
+}
+auto app::tooling::env::setMSP(Configuration const &cfg, std::string value, Override override) -> void {
+  auto varname = "CORE_PEER_MSPCONFIGPATH"s;
+  if (!ok(sys::posix::getenv<std::string>(varname))) {
+    // Respect what was there before, but there is nothing then set a good default.
+    auto force = override == Override::OVERRIDE;
+    auto set = sys::posix::setenv(varname, value, force);
+    if (!ok(set)) {
+      // Just warn ... it should never happen and also we can continue on.
+      // Also PATH may be just fine already.
+      warning(cfg) << "could not set " << varname << " to " << value << " because " << error_code(set).message() << '\n';
+    }
+  }
+}
+#endiv

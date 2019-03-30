@@ -1,1 +1,23 @@
-Unimplemented
+usage: lt-pct [...options...] command ...arguments...
+
+Hyperledger (Fabric) Options:
+  --channel=<name>                      a channel name
+  --chaincode=<name>                    a chaincode name
+  --peers=<endpoints>                   a comma-separated list of peer endpoints
+                                        <endpoint> is a FQDN or FQDN:PORT or the address variant of such
+  --msp=.../admin/msp                   path to the MSP certificate directory
+                                        default: /etc/hyperledger/fabric/admin/msp
+
+General Options:
+  --usage, --help                       show this message
+  --version                             exhibit the version and quit
+  --warnings, --warning                 warnings mode
+  --quiet                               Shut. Up.  is independent of --verbose
+  --verbose                             verbose mode
+  --dryrun, --dry-run                   dry run, do not do anything
+  --debug                               debug mode (you should not need this)
+
+Commands
+  get KEY
+  set KEY VALUE
+  history KEY

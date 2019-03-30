@@ -1,0 +1,25 @@
+tests_pck_XFAIL_TESTS = \
+  $(end)
+tests_pck_TESTS = \
+  tests/pck/dryrun.usage.test \
+  tests/pck/dryrun.help.test \
+  tests/pck/dryrun.h.test \
+  \
+  tests/pck/dryrun.version.test \
+  tests/pck/dryrun.V.test \
+  \
+  tests/pck/run.empty.test \
+  tests/pck/run.usage.test \
+  tests/pck/run.version.test \
+  \
+  tests/pck/run.01.test \
+  tests/pck/run.02.test \
+  tests/pck/run.03.test \
+  \
+  $(tests_pck_XFAIL_TESTS) \
+  $(end)
+
+tests_pck_TESTS_DECLARED = $(tests_pck_TESTS)
+tests_pck_TESTS_OBSERVED = $(wildcard tests/pck/*.test)
+tests_pck_TESTS_ORPHANED = $(filter-out $(tests_pck_TESTS_DECLARED), $(tests_pck_TESTS_OBSERVED))
+$(if $(tests_pck_TESTS_ORPHANED), $(error orphaned tests $(tests_pck_TESTS_ORPHANED)))

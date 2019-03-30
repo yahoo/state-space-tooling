@@ -1,0 +1,23 @@
+#!/bin/sh
+source ${0%/*}/rigging.sh || exit 70
+(
+    $exe \
+        841e402f-e4e9-4478-9377-1adecb6a470e \
+        6a155a0f-33e7-4be4-8e48-3d7568d37ace \
+        ea6010a8-a120-4909-9a7a-be6cd0e2bc9b \
+        9e1be9c4-62d3-48a0-9652-0653253ef076 \
+        118363d8-ecbc-4c50-b6ae-d38e9fc86639 \
+        93dadc15-8eae-4167-8525-bb83be051c46 \
+        d61bc359-ae11-4bc8-ace6-743fc673e5d6 \
+        f6f0a9d8-a2d8-4c12-8b16-d0fa11dcf8ce \
+        1bc1b077-e3f6-449e-8a95-0869a427bf6e \
+        035ddb18-cefa-4cf5-84b5-35f557080242 \
+        2cc4e72d-e746-4d44-837a-ee2ef75eede5 \
+        b3b95267-e3a7-49db-825f-c31fe5c0bbba \
+        def50d5f-e745-4112-95d3-97e34d20a55b \
+        c27ea821-bf4f-4923-aab0-d4a31031d69e \
+        392c2bea-1cda-4df4-9f5e-5ad14b985b3f \
+        ${end}
+) >& $output
+difference $golden $output
+successful

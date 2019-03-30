@@ -1,3 +1,3 @@
-lt-pct: error, there is no channelID, perhaps --channelID is missing?
+lt-pct: error, no command (nothing to do)
 lt-pct: error, there is no chaincode name, perhaps --name is missing?
 lt-pct: warning, there are no peers to contact, perhaps --peersAddresses is missing?
