@@ -22,6 +22,21 @@ namespace app::tooling {
     enum Override { DEFAULT, OVERRIDE };
     auto setMSP(Configuration const &, std::string value, Override) -> void;
   }
+  namespace detail {
+    // Throws if the argv is not exactly the count.
+    // This signals is the programmer's error (your error) because the length was to have been checked prior.
+    inline auto enforce_length(std::size_t count, Argv const &) -> void;
+  }
+}
+#endiv
+#divert <ipp>
+#import std.length_error
+auto app::tooling::detail::enforce_length(std::size_t count, Argv const &vv) -> void {
+  if (count != vv.size()) {
+    auto too = vv.size() < count ? "too short" : "too long";
+    throw std::length_error{too};
+  }
+
 }
 #endiv
 #divert <cpp>
@@ -170,14 +185,14 @@ auto app::tooling::main(c::argv av) -> sys::exits::Code try {
   std::cerr << "tooling: unexpected exception " << e.what() << '\n';
   return sys::exits::SOFTWARE;
 }
-#import std.length_error
 #import iab.privacychain.api
 #import iab.privacychain.Key
 #import iab.privacychain.record.Visitor
 #import std.visit
 #import std.string_view
+#import json.writer // operator<<(json::Value) but [[FIXTHIS]] move to the format(Value) system
 auto app::tooling::get(Configuration &cfg, Argv vv) -> sys::exits::Code {
-  if (1 != vv.size()) { throw std::length_error{"short"}; } // this is the programmer's error (your error)
+  detail::enforce_length(1, vv);
   using namespace iab::privacychain::api;
   namespace api1 = iab::privacychain::api::v1;
   namespace key = iab::privacychain::key;
@@ -198,25 +213,59 @@ auto app::tooling::get(Configuration &cfg, Argv vv) -> sys::exits::Code {
   }
   namespace record = iab::privacychain::record;
   auto &out{std::cout};
-  auto const visitor = record::Visitor{[&out](record::Bytes const &b) { out << std::string_view{/*DANGEROUS DANGEROUS DANGEROUS*/ reinterpret_cast<char const *>(b.data()), b.size()}; },
-                                       [&out](record::Json const &)  { out << "JSON"; },
+  auto const visitor = record::Visitor{[&out](record::Bytes const &b) {
+                                         auto view = [&b]() {
+                                                       auto const dangerous = /*DANGEROUS DANGEROUS*/ reinterpret_cast<char const *>(b.data());
+                                                       return std::string_view{dangerous, b.size()};
+                                                     }();
+                                         out << view;
+                                       },
+                                       [&out](record::Json const &object) {
+                                         out << "JSON " << object;
+                                       },
                                        [&out](record::tcf::V1 const &) { out << "TCF.v1"; },
                                        [&out](auto const &)  { out << "unknown record type"; }};
   std::visit(visitor, value(got));
   return sys::exits::OK;
 }
+#import json.to
+#import json.parse
+#import json.Value
+#import std.move
 auto app::tooling::set(Configuration &cfg, Argv vv) -> sys::exits::Code {
-  if (2 != vv.size()) { throw std::length_error{"short"}; }
-  std::cerr << "set is unimplemented";
+  detail::enforce_length(2, vv);
+  using namespace iab::privacychain::api;
+  namespace api1 = iab::privacychain::api::v1;
+  namespace key = iab::privacychain::key;
+  Operation<INVOKE> op{cfg.context};
+  auto to = key::from_string(vv.front());
+  if (!ok(to)) {
+    error(cfg) << error_code(to).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  vv = c::rest(vv);
+  std::string payload = vv.front();
   if (cfg.dry_run_mode) {
     notice(cfg) << "skipping 'set' in dry-run mode\n";
     return sys::exits::OK;
   }
-  return sys::exits::SOFTWARE;
+  // NASTY!  If we don't parse it here then it goes into the database as a JSON STRING
+  // NASTY!  which means that when it is pulled out of the database, it will be a JSON STRING
+  // NASY!   which means that it may print like a JSON object, but won't be one (hint: the backslashes)
+  //
+  // Specimen:  "{\"apple\":\"banana\"}"  <----------------------- bad ... a JSON STRING
+  //
+  auto object = json::parse(json::failure::THROWING, json::to(json::STRING{}, payload));
+  auto got = api1::set(op, value(to), std::move(object));
+  if (!ok(got)) {
+    error(cfg) << error_code(got).message() << '\n';
+    return sys::exits::FAIL;
+  }
+  return sys::exits::OK;
 }
 #import iab.privacychain.History
 auto app::tooling::history(Configuration &cfg, Argv vv) -> sys::exits::Code {
-  if (1 != vv.size()) { throw std::length_error{"short"}; }
+  detail::enforce_length(1, vv);
   using namespace iab::privacychain::api;
   namespace api1 = iab::privacychain::api::v1;
   namespace key = iab::privacychain::key;
@@ -236,7 +285,7 @@ auto app::tooling::history(Configuration &cfg, Argv vv) -> sys::exits::Code {
     return sys::exits::FAIL;
   }
   auto &out{std::cout};
-  for (auto const &_ : value(got)) {
+  for (auto const &rec : value(got)) {
 #warning WRITETHIS out << format(tx) << '\n';
     out << "transaction\n";
   }

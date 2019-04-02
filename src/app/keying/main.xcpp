@@ -19,19 +19,21 @@ auto main(int cc, char *vv[]) -> int {
 auto app::keying::main(c::argv av) -> sys::exits::Code try {
   auto NAME = av.front();
   auto verbose_mode = false;
-  auto warning = false;
+  auto warnings_count = false;
   for (std::string word : c::rest(av)) {
     if (word.empty()) {
       std::cerr << NAME << ": warning, empty identifier is ignored (you cannot have an identifier like that)\n";
     } else if ('-' == word.front()) {
-      std::cerr << NAME << ": warning, there are no options (nominate identifiers with --\n";
-      warning = true;
+      std::cerr << NAME << ": warning, there are no options (nominate identifiers with --)\n";
+      warnings_count = true;
     } else {
       std::cout << format(rabinpoly::fingerprint(word)) << '\n';
     }
   }
   if (verbose_mode) {
-    std::cerr << NAME << ": info, there were warnings\n";
+    if (warnings_count) {
+      std::cerr << NAME << ": info, there were warnings\n";
+    }
   }
   return sys::exits::OK;
 } catch (...) {
