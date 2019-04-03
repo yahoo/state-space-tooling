@@ -1,0 +1,73 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace tests::unit::key { class Fixture; }
+#endiv
+#divert <hpp>
+#import cppunit.Test
+#import cppunit.test.Fixture
+class tests::unit::key::Fixture : public cppunit::test::Fixture {
+public:
+  auto test_usage_Identifier() -> void;
+  auto test_usage_Pair() -> void;
+  auto test_usage_fingerprint() -> void;
+  static auto suite() -> cppunit::Test *;
+};
+#endiv
+#divert <cpp>
+#import sst.generate.key.Identifier
+#import uuid.Container
+auto tests::unit::key::Fixture::test_usage_Identifier() -> void {
+  using ::sst::generate::key::Identifier;
+  Identifier subject0;
+  Identifier subject1{uuid::Container{}};
+  Identifier subject2{0x0'dead'beef'ea5e'f04elu, 0x0'feed'f00d'feed'f00dlu};
+  CPPUNIT_ASSERT(subject0 == subject1); // both are zeroed
+  CPPUNIT_ASSERT(subject1 != subject2);
+}
+#import sst.generate.key.Pair
+#import rabinpoly.Fingerprint
+auto tests::unit::key::Fixture::test_usage_Pair() -> void {
+  using ::sst::generate::key::Pair;
+  using ::sst::generate::key::Identifier;
+  using ::rabinpoly::Fingerprint;
+  auto subject0 = Pair{Identifier{}, Fingerprint{}};
+  auto subject1 = Pair{Identifier{uuid::Container{}}, Fingerprint{}};
+  auto subject2 = Pair{Identifier{0x0'dead'beef'ea5e'f04elu, 0x0'feed'f00d'feed'f00dlu}, Fingerprint{0x0'0123'4567'89ab'cdeflu}};
+  CPPUNIT_ASSERT(subject0.identifier() == subject1.identifier());
+  CPPUNIT_ASSERT(subject0.fingerprint() == subject1.fingerprint()); // both are zeroed
+  CPPUNIT_ASSERT(subject1.identifier() != subject2.identifier());
+  CPPUNIT_ASSERT(subject1.fingerprint() != subject2.fingerprint());
+}
+#import sst.generate.key.fingerprint
+#import uuid.generate.random
+auto tests::unit::key::Fixture::test_usage_fingerprint() -> void {
+  using ::sst::generate::key::Identifier;
+  auto subject0 = Identifier{uuid::generate::random()};
+  auto fp0 = fingerprint(subject0);
+  auto subject1 = Identifier{uuid::generate::random()};
+  auto fp1 = fingerprint(subject1);
+  std::cerr << "example0 " << format(subject0) << '/' << format(fp0) << '\n';
+  std::cerr << "example1 " << format(subject1) << '/' << format(fp1) << '\n';
+  CPPUNIT_ASSERT(subject0 != subject1);
+  CPPUNIT_ASSERT(fp0 != fp1);
+}
+#import tests.unit.key.Identifier
+#import unit.rigging.suite.Stream
+#import unit.rigging.suite.call
+#import unit.rigging.suite.add
+auto tests::unit::key::Fixture::suite() -> cppunit::Test * {
+  using namespace ::unit::rigging::suite;
+  Stream series("key");
+  {
+    Stream use("usage");
+    use << call("Identifier", &Fixture::test_usage_Identifier)
+        << call("Pair", &Fixture::test_usage_Pair)
+        << call("fingerprint", &Fixture::test_usage_fingerprint)
+    ;
+    series << add(use.release());
+  }
+  series << add(Identifier::suite());
+  return series.release();
+}
+#endiv

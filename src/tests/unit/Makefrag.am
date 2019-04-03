@@ -14,6 +14,9 @@ check_bin_unit_MODULES = $(call TF_SOURCEStoMODULES, $(check_bin_unit_SOURCES))
 check_bin_unit_SOURCES = \
   obj/src/tests/unit/main.cpp \
   obj/src/tests/unit/namespace.cpp \
+  obj/src/tests/unit/generate.Fixture.cpp \
+  obj/src/tests/unit/key.Fixture.cpp \
+  obj/src/tests/unit/key.Identifier.cpp \
   obj/src/tests/unit/sst.Fixture.cpp \
   obj/src/tests/unit/want.Fixture.cpp \
   $(end)

@@ -75,6 +75,7 @@ fi
 : ${with_module_rabinpoly:=${with_scold_nearby?}/module-rabinpoly}
 : ${with_module_std:=${with_scold_nearby?}/module-std}
 : ${with_module_string:=${with_scold_nearby?}/module-string}
+: ${with_module_uuid:=${with_scold_nearby?}/module-uuid}
 : ${with_temerarious_flagship:=${with_tunitas_nearby?}/temerarious-flagship}
 : ${with_tunitas_basics:=${with_tunitas_nearby?}/basics}
 eval \
@@ -102,6 +103,7 @@ eval \
     ${with_module_std:+--with-module-std=$with_module_std} \
     ${with_module_string:+--with-module-string=$with_module_string} \
     ${with_module_sys:+--with-module-sys=$with_module_sys} \
+    ${with_module_uuid:+--with-module-uuid=$with_module_uuid} \
     ${with_tunitas_basics:+--with-tunitas-basics=$with_tunitas_basics} \
     ${with_temerarious_flagship:+--with-temerarious-flagship=$with_temerarious_flagship} \
     ${with_std_hyperledger_fabric:+--with-std-hyperledger-fabric=$with_std_hyperledger_fabric} \

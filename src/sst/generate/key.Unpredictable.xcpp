@@ -1,0 +1,39 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::generate::key {
+  //
+  // Generate unpredictable identifiers
+  // And their associated database key.
+  //
+  // Usage:
+  //
+  //   using namespace ::iab::cprivacychain;
+  //   Operation<INVOKE> op;
+  //   auto generator = generate::Unpredictable{...initial-conditions...};
+  //   do {
+  //     auto generated = generator();
+  //     api::set(op, generated.key(), generated.payload()
+  //   } while (...the sun shines...);
+  //
+  class Unpredictable;
+}
+#endiv
+#divert <hpp>
+#import sst.generate.key.Basis
+class sst::generate::key::Unpredictable : public Basis {
+public:
+  Unpredictable() = default;
+  inline auto operator()() -> Result;
+};
+#endiv
+#divert <ipp>
+#import uuid.generate.random
+#import sst.generate.key.Identifier
+#import sst.generate.key.fingerprint
+auto sst::generate::key::Unpredictable::operator()() -> Pair {
+  auto i = Identifier{uuid::generate::random()};
+  auto f = fingerprint(i);
+  return Pair{i, f};
+}
+#endiv

@@ -1,0 +1,44 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::generate::key {
+  //
+  // Generate predictable identifiers.
+  // And their associated database key.
+  //
+  // Usage:
+  //
+  //   using namespace ::iab::cprivacychain;
+  //   Operation<INVOKE> op;
+  //   auto generator = generate::Predictable{...initial-conditions...};
+  //   do {
+  //     auto generated = generator();
+  //     api::set(op, generated.key(), generated.payload()
+  //   } while (...the sun shines...);
+  //
+  class Predictable;
+}
+#endiv
+#divert <hpp>
+#import sst.generate.key.Basis
+#import std.mt19937_64
+class sst::generate::key::Predictable : public Basis {
+  using ancestor = Basis;
+public:
+  Predictable() = default;
+  inline auto operator()() -> Result;
+protected:
+  std::mt19937_64 engine;
+};
+#endiv
+#divert <ipp>
+#import uuid.generate.random
+#import sst.generate.key.Identifier
+auto sst::generate::key::Predictable::operator()() -> Result {
+  auto first = engine();
+  auto second = engine();
+  auto i = Identifier{first, second}; // WATCHOUT - Identifier{engine(), engine()} has unspecified order
+  auto f = fingerprint(i);
+  return Pair{i, f};
+}
+#endiv

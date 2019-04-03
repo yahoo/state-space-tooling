@@ -1,0 +1,37 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+#import std.pair
+namespace sst::generate::key::pair {
+  //
+  // The formatting
+  //
+  // Lifetimes:
+  //   The lifetime of the pair must be longer than that of the Formatter
+  //
+  // Usage:
+  //
+  //   auto p = Pair{...};
+  //   cerr << format(p);
+  //
+  struct Formatter;
+}
+#endiv
+#divert <hpp>
+#import std.ostream // [[FIXTHIS]] lazy ... narrow characters only
+namespace sst::generate::key::pair {
+  inline auto operator<<(std::ostream &, Formatter const &) -> std::ostream &;
+}
+#forward sst.generate.key.Pair
+struct sst::generate::key::pair::Formatter {
+  using Value = Pair;
+  inline explicit Formatter(Value const &value) : value{value} { }
+  Value const &value;
+};
+#endiv
+#divert <ipp>
+#import sst.generate.key.Pair
+auto sst::generate::key::pair::operator<<(std::ostream &o, Formatter const &f) -> std::ostream & {
+  return o << '<' << format(f.value.identifier()) << ',' << format(f.value.fingerprint()) << '>';
+}
+#endiv

@@ -55,6 +55,7 @@ TF_WITH_MODULE([rabinpoly])
 TF_WITH_MODULE([std])
 TF_WITH_MODULE([string]) dnl a.k.a. c-string
 TF_WITH_MODULE([sys])
+TF_WITH_MODULE([uuid])
 
 TF_WITH_MODULE([cppunit])
 TF_WITH_MODULE([rigging]) dnl a.k.a. unit-rigging -> rigging-unit

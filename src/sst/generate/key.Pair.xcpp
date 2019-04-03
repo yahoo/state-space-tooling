@@ -1,0 +1,37 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+#import std.pair
+namespace sst::generate::key {
+  //
+  // The <Identifier, Key> pair.
+  //
+  // Usage:
+  //
+  //   rly?
+  //
+  struct Pair;
+}
+#endiv
+#divert <hpp>
+#forward sst.generate.key.pair.Formatter
+namespace sst::generate::key {
+  inline auto format(Pair const &) -> pair::Formatter;
+}
+#import sst.generate.key.Identifier
+#import rabinpoly.Fingerprint
+class sst::generate::key::Pair : private std::pair<Identifier, rabinpoly::Fingerprint> {
+  using ancestor = std::pair<Identifier, rabinpoly::Fingerprint>;
+public:
+  Pair() = default;
+  using ancestor::pair;
+  inline auto identifier() const -> first_type { return first; }
+  inline auto fingerprint() const -> second_type { return second; }
+};
+#endiv
+#divert <ipp>
+#import sst.generate.key.pair.Formatter
+auto sst::generate::key::format(Pair const &p) -> pair::Formatter {
+  return pair::Formatter{p};
+}
+#endiv

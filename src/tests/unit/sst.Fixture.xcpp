@@ -8,14 +8,64 @@ namespace tests::unit::sst { class Fixture; }
 #import cppunit.test.Fixture
 class tests::unit::sst::Fixture : public cppunit::test::Fixture {
 public:
-  auto test_something() -> void;
+  auto test_usage_generate_key_Identifier() -> void;
+  auto test_usage_generate_key_Pair() -> void;
+  auto test_usage_generate_key_Unpredictable() -> void;
+  auto test_usage_generate_key_Predictable() -> void;
+  auto test_usage_generate_key_fingerprint() -> void;
   static auto suite() -> cppunit::Test *;
 };
 #endiv
 #divert <cpp>
-#import sst
-auto tests::unit::sst::Fixture::test_something() -> void {
-  CPPUNIT_ASSERT(true);
+#import uuid.generate.random
+#import sst.generate.key.Identifier
+auto tests::unit::sst::Fixture::test_usage_generate_key_Identifier() -> void {
+  using namespace ::sst::generate::key;
+  Identifier subject0;
+  Identifier subject1{uuid::generate::random()};
+  CPPUNIT_ASSERT(subject0 != subject1);
+  auto fp0 = fingerprint(subject0);
+  auto fp1 = fingerprint(subject1);
+  if (fp0 == fp1) {
+    std::cerr << "SURPRISE! fingerprint collision " << format(fp1) << '\n';
+  }
+  CPPUNIT_ASSERT(fp0 != fp1);
+}
+#import sst.generate.key.Predictable
+#import sst.generate.key.Pair
+auto tests::unit::sst::Fixture::test_usage_generate_key_Pair() -> void {
+  using namespace ::sst::generate::key;
+  Pair pair0;
+  Predictable generate;
+  Pair pair1 = generate();
+  CPPUNIT_ASSERT(pair0.identifier() != pair1.identifier());
+  CPPUNIT_ASSERT(pair0.fingerprint() != pair1.fingerprint());
+}
+#import sst.generate.key.Unpredictable
+auto tests::unit::sst::Fixture::test_usage_generate_key_Unpredictable() -> void {
+  using namespace ::sst::generate::key;
+  Unpredictable generate;
+  auto pair1 = generate();
+  auto pair2 = generate();
+  std::cerr << "pair1 = " << format(pair1) << " =?= " << format(pair2) << '\n';
+  CPPUNIT_ASSERT(pair1.identifier() != pair2.identifier());
+  CPPUNIT_ASSERT(pair1.fingerprint() != pair2.fingerprint());
+}
+#import sst.generate.key.Predictable
+auto tests::unit::sst::Fixture::test_usage_generate_key_Predictable() -> void {
+  using namespace ::sst::generate::key;
+  Predictable generate;
+  auto pair1 = generate();
+  auto pair2 = generate();
+  CPPUNIT_ASSERT(pair1.identifier() != pair2.identifier());
+  CPPUNIT_ASSERT(pair1.fingerprint() != pair2.fingerprint());
+}
+#import sst.generate.key.fingerprint
+auto tests::unit::sst::Fixture::test_usage_generate_key_fingerprint() -> void {
+  using namespace ::sst::generate::key;
+  Identifier subject1{uuid::generate::random()};
+  Identifier subject2{uuid::generate::random()};
+  CPPUNIT_ASSERT(fingerprint(subject1) != fingerprint(subject2));
 }
 #import unit.rigging.suite.Stream
 #import unit.rigging.suite.call
@@ -23,8 +73,24 @@ auto tests::unit::sst::Fixture::test_something() -> void {
 auto tests::unit::sst::Fixture::suite() -> cppunit::Test * {
   using namespace ::unit::rigging::suite;
   Stream series("sst");
-  series << call("something", &Fixture::test_something)
-    ;
+  {
+    Stream use("usage");
+    {
+      Stream gen("generate");
+      {
+        Stream key("key");
+        key << call("Identifier", &Fixture::test_usage_generate_key_Identifier)
+            << call("Unpredictable", &Fixture::test_usage_generate_key_Pair)
+            << call("Unpredictable", &Fixture::test_usage_generate_key_Unpredictable)
+            << call("Predictable", &Fixture::test_usage_generate_key_Predictable)
+            << call("fingerprint", &Fixture::test_usage_generate_key_fingerprint)
+          ;
+        gen << add(key.release());
+      }
+      use << add(gen.release());
+    }
+    series << add(use.release());
+  }
   return series.release();
 }
 #endiv

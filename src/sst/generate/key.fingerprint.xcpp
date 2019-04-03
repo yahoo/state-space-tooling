@@ -1,0 +1,94 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <hpp>
+#import rabinpoly.Fingerprint
+#forward sst.generate.key.Identifier
+namespace sst::generate::key {
+  // 
+  // Generate the database key (fingeprint) of the many specialized types
+  //
+  // Usage:
+  //
+  //   auto id = Identifier{...somehow...};
+  //   auto print = fingerprint(id);
+  //
+  namespace packaging::fingerprint::function {
+    using Result = rabinpoly::Fingerprint;
+    inline auto fingerprint(Identifier const &) -> Result;
+  }
+  using packaging::fingerprint::function::fingerprint;
+}
+#endiv
+#divert <ipp>
+#import sst.generate.key.Identifier
+#import rabinpoly.generate
+#undef __DEBUG_FINGERPRINT__
+#ifdef __DEBUG_FINGERPRINT__
+#import std.cerr
+#import std.string_view
+#import sst.generate.key.identifier.Formatter
+#import std.is_same
+#include <cassert>
+#import std.hex
+#endif
+auto sst::generate::key::packaging::fingerprint::function::fingerprint(Identifier const &specimen) -> Result {
+  //
+  // Note: the Identifier(uuid::Container) constructor does the inverse of this
+  //
+  // Because the implementation of Identifier doesn't allow memory-level access
+  // we have to create a temporary structure which does allow such memory-level access.
+  //
+  // Recall the endian sense
+  // - the array is naturally "little endian"
+  // - the characters are *pictured* in big endian, but we access them atomically in any order
+  //
+  // array<bool> -> b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 bA bB bC bD bE bF
+  //                    ...pictured...          ...pictured...
+  // array<char>    <------76543210-------> <------FEDCBA98------>
+  //
+  auto const WIDTH = 8;
+  auto const MAX = WIDTH - 1;
+  unsigned char workspace[specimen.size()/WIDTH];
+  static_assert(128/WIDTH == sizeof (workspace));
+  int position{-1};
+  unsigned char fill{0};
+#ifdef __DEBUG_FINGERPRINT__
+  for (auto b : specimen) {
+    static_assert(std::is_same<bool, decltype(b)>:: value);
+    assert(0 == b || 1 == b);
+  }
+  std::cerr << "\nspecimen: " << format(specimen) << '\n';
+  std::cerr << "workspace: ";
+#endif
+  for (auto b : specimen) {
+    static_assert(std::is_same<bool, decltype(b)>::value);
+#ifdef __DEBUG_FINGERPRINT__
+    std::cerr << b;
+#endif
+    ++position;
+    auto const modulated = position % WIDTH;
+    auto const mask = 1u << modulated;
+    auto const positioned = b ? mask : 0x0;
+#ifdef __DEBUG_FINGERPRINT__
+    std::cerr << position << '.' << std::hex << positioned << '|';
+#endif
+    fill |= positioned;
+    if (MAX == modulated) {
+      workspace[position/WIDTH] = fill;
+      fill = 0x0;
+    }
+  }
+#ifdef __DEBUG_FINGERPRINT__
+  std::cerr << "\n";
+  auto start = &workspace[0];
+  auto finish = start + sizeof (workspace);
+  std::cerr << "fingerprint of " << format(specimen) << " will be " << format(rabinpoly::generate(start, finish)) << '\n'; 
+  std::cerr << "workspace=";
+  for (auto c : workspace) {
+    std::cerr << std::hex << std::setw(2) << std::setfill('0') << (unsigned) c;
+  }
+  std::cerr << '\n';
+#endif
+  return rabinpoly::generate(start, finish);
+}
+#endiv

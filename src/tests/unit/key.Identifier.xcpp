@@ -1,0 +1,176 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace tests::unit::key { class Identifier; }
+#endiv
+#divert <hpp>
+#import cppunit.Test
+#import cppunit.test.Fixture
+#import sst.generate.key.Identifier
+class tests::unit::key::Identifier : public cppunit::test::Fixture {
+public:
+  using Subject = ::sst::generate::key::Identifier;
+  auto test_constructor_default_basic() -> void;
+  auto test_constructor_default_zero() -> void;
+  auto test_constructor_uuid_basic() -> void;
+  auto test_constructor_uuid_zero() -> void;
+  auto test_constructor_uuid_random() -> void;
+  auto test_constructor_hilo_basic() -> void;
+  auto test_constructor_hilo_zero() -> void;
+  auto test_operator_eq() -> void;
+  auto test_operator_ne() -> void;
+  auto test_format_zero() -> void;
+  auto test_format_random() -> void;
+  auto test_format_hilo() -> void;
+  static auto suite() -> cppunit::Test *;
+};
+#endiv
+#divert <cpp>
+auto tests::unit::key::Identifier::test_constructor_default_basic() -> void {
+  Subject s0, s1;
+  CPPUNIT_ASSERT(s0 == s1);
+  CPPUNIT_ASSERT( !(s0 != s1) );
+}
+auto tests::unit::key::Identifier::test_constructor_default_zero() -> void {
+  Subject subject;
+  auto count{0u};
+  for (auto b : subject) {
+    CPPUNIT_ASSERT(false == b); // was it initialized properly?
+    ++count;
+  }
+  CPPUNIT_ASSERT(128u == count);
+}
+#import uuid.Container
+auto tests::unit::key::Identifier::test_constructor_uuid_basic() -> void {
+  Subject s0 = Subject{uuid::Container{}};
+  Subject s1 = Subject{uuid::Container{}};
+  CPPUNIT_ASSERT(s0 == s1);
+  CPPUNIT_ASSERT( !(s0 != s1) );
+}
+auto tests::unit::key::Identifier::test_constructor_uuid_zero() -> void {
+  Subject subject = Subject{uuid::Container{}};
+  auto count{0u};
+  for (auto b : subject) {
+    CPPUNIT_ASSERT(false == b); // was it initialized properly?
+    ++count;
+  }
+  CPPUNIT_ASSERT(128u == count);
+}
+#import uuid.generate.random
+auto tests::unit::key::Identifier::test_constructor_uuid_random() -> void {
+  Subject subject;
+  auto count{uuid::generate::random()};
+  auto on{0u}, off{0u};
+  for (auto b : subject) {
+    on += true == b;
+    off += false == b;
+  }
+  // ahem, all bits on or all bits off *could* happen by chance in 1/2^128
+  CPPUNIT_ASSERT(0 != on);
+  CPPUNIT_ASSERT(0 != off);
+}
+#import std.uint64_t
+auto tests::unit::key::Identifier::test_constructor_hilo_basic() -> void {
+  using Integer = std::uint64_t;
+  Subject s0 = Subject{Integer{0}, Integer{0}};
+  Subject s1 = Subject{Integer{0}, Integer{0}};
+  CPPUNIT_ASSERT(s0 == s1);
+  CPPUNIT_ASSERT( !(s0 != s1) );
+}
+auto tests::unit::key::Identifier::test_constructor_hilo_zero() -> void {
+  using Integer = std::uint64_t;
+  Subject subject = Subject{Integer{0}, Integer{0}};
+  auto count{0u};
+  for (auto b : subject) {
+    CPPUNIT_ASSERT(false == b); // was it initialized properly?
+    ++count;
+  }
+  CPPUNIT_ASSERT(128u == count);
+}
+#import uuid.generate.random
+auto tests::unit::key::Identifier::test_operator_eq() -> void {
+  Subject s0{uuid::generate::random()}, s1{uuid::generate::random()};
+  CPPUNIT_ASSERT(s0 == s0);
+  CPPUNIT_ASSERT( ! (s0 == s1) );
+}
+auto tests::unit::key::Identifier::test_operator_ne() -> void {
+  Subject s0{uuid::generate::random()}, s1{uuid::generate::random()};
+  CPPUNIT_ASSERT(s0 != s1);
+  CPPUNIT_ASSERT( ! (s0 != s0) );
+  CPPUNIT_ASSERT(true);
+}
+#import std.ostringstream
+auto tests::unit::key::Identifier::test_format_zero() -> void {
+  auto subject = Subject{};
+  std::ostringstream buf;
+  buf << format(subject);
+  auto const actual = buf.str();
+  auto const expected = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"s;
+  CPPUNIT_ASSERT_EQUAL(expected, actual);
+}
+auto tests::unit::key::Identifier::test_format_random() -> void {
+  auto subject = Subject{uuid::generate::random()};
+  std::ostringstream buf;
+  buf << format(subject);
+  auto const actual = buf.str();
+  auto on{0u}, off{0u};
+  for (auto c : actual) {
+    on += '1' == c;
+    off += '0' == c;
+  }
+  std::cerr << "actual=" << actual << '\n';
+  // ahem, all bits on or all bits off *could* happen by chance in 1/2^128
+  CPPUNIT_ASSERT(0 != on);
+  CPPUNIT_ASSERT(0 != off);
+}
+auto tests::unit::key::Identifier::test_format_hilo() -> void {
+  auto subject = Subject{0x0'feed'f00dlu, 0x0'f00d'feedlu};
+  std::ostringstream buf;
+  buf << format(subject);
+  auto const actual = buf.str();
+  auto const expected = "10110111011111111011000000001111000000000000000000000000000000001011000000001111101101110111111100000000000000000000000000000000"s;
+  CPPUNIT_ASSERT_EQUAL(expected, actual);
+}
+#import unit.rigging.suite.Stream
+#import unit.rigging.suite.call
+#import unit.rigging.suite.add
+auto tests::unit::key::Identifier::suite() -> cppunit::Test * {
+  using namespace ::unit::rigging::suite;
+  Stream series("Identifier");
+  {
+    Stream con("constructor");
+    {
+      Stream def("default");
+      def << call("basic", &Identifier::test_constructor_default_basic)
+          << call("zero", &Identifier::test_constructor_default_zero)
+        ;
+      con << add(def.release());
+    } {
+      Stream uui("uui");
+      uui << call("basic", &Identifier::test_constructor_uuid_basic)
+          << call("zero", &Identifier::test_constructor_uuid_zero)
+        ;
+      con << add(uui.release());
+    } {
+      Stream hil("hilo");
+      hil << call("basic", &Identifier::test_constructor_hilo_basic)
+          << call("zero", &Identifier::test_constructor_hilo_zero)
+        ;
+      con << add(hil.release());
+    }
+    series << add(con.release());
+  }
+  series << call("operator==", &Identifier::test_operator_eq)
+         << call("operator!=", &Identifier::test_operator_ne)
+    ;
+  {
+    Stream frm("format");
+    frm << call("zero", &Identifier::test_format_zero)
+        << call("random", &Identifier::test_format_random)
+        << call("hilo", &Identifier::test_format_hilo)
+      ;
+    series << add(frm.release());
+  }
+  return series.release();
+}
+#endiv

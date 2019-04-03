@@ -1,0 +1,56 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::generate::key::identifier {
+  //
+  // The formatting
+  //
+  // Lifetimes:
+  //   The lifetime of the identifier must be longer than that of the Formatter
+  //
+  // Usage:
+  //
+  //   auto p = Identifier{...};
+  //   cerr << format(p);
+  //
+  struct Formatter;
+}
+#endiv
+#divert <hpp>
+#import std.ostream // [[FIXTHIS]] lazy ... narrow characters only
+namespace sst::generate::key::identifier {
+  inline auto operator<<(std::ostream &, Formatter const &) -> std::ostream &;
+}
+#forward sst.generate.key.Identifier
+struct sst::generate::key::identifier::Formatter {
+  using Value = Identifier;
+  inline explicit Formatter(Value const &value) : value{value} { }
+  Value const &value;
+  struct Guard;
+  inline auto dump(std::ostream &) const -> std::ostream &; // use the declared friendship to access this->value private members
+};
+#endiv
+#divert <ipp>
+auto sst::generate::key::identifier::operator<<(std::ostream &o, Formatter const &f) -> std::ostream & {
+  return f.dump(o);
+}
+#import sst.generate.key.Identifier
+#import sst.generate.key.identifier.Formatter.Guard
+#import std.noboolalpha
+#import std.cerr
+#import std.string_view
+#import sst.generate.key.identifier.Formatter
+#import std.is_same
+#include <cassert>
+#import std.hex
+auto sst::generate::key::identifier::Formatter::dump(std::ostream &o) const -> std::ostream & {
+  Guard guard{o};
+  o << std::noboolalpha;
+  for (auto b : value) {
+    static_assert(std::is_same<bool, decltype(b)>:: value);
+    assert(0 == b || 1 == b);
+  }
+  for (auto b : value) { o << b; }
+  return o;
+}
+#endiv

@@ -1,0 +1,129 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::generate::key {
+  //
+  // An identifier ... with 128 bits of entropy-space inside.
+  // The identifier is a "string of bits"; it is not an integer.
+  //
+  // HOWEVER - when generating such identifiers from random *number* generators
+  // you must be sure to respect the endian sense of the architectur4e upon which
+  // you are executing.  To be able to have repeatable tests.
+  //
+  // Usage:
+  //
+  //   auto id = Identifier{};
+  //   auto id = Identifier{uuid::generate::random()};
+  //   auto id = [&engine]() {
+  //             auto first = engine();
+  //             auto second = engine();
+  //             return Identifier{first, second}; <------------------ order of argument evaluation is unspecified
+  //           }();
+  // 
+  class Identifier;
+}
+#endiv
+#divert <hpp>
+#forward sst.generate.key.identifier.Formatter
+namespace sst::generate::key {
+  inline auto format(Identifier const &) -> identifier::Formatter;
+  inline auto operator==(Identifier const &, Identifier const &) -> bool;
+  inline auto operator!=(Identifier const &, Identifier const &) -> bool;
+}
+#import std.array
+#import sst.generate.key.fingerprint
+#import uuid.Container
+#import std.uint64_t
+#forward tests.unit.key.Identifier
+class sst::generate::key::Identifier : private std::array<bool, 128> {
+  using ancestor = std::array<bool, 128>;
+  friend class tests::unit::key::Identifier;
+public:
+  inline Identifier();
+  inline explicit Identifier(uuid::Container const &);
+  inline explicit Identifier(std::uint64_t hi, std::uint64_t lo);
+private:
+  friend auto packaging::fingerprint::function::fingerprint(Identifier const &) -> packaging::fingerprint::function::Result;
+  friend auto key::operator==(Identifier const &, Identifier const &) -> bool;
+  friend auto key::operator!=(Identifier const &, Identifier const &) -> bool;
+  friend struct identifier::Formatter;
+};
+#endiv
+#divert <ipp>
+#import sst.generate.key.identifier.Formatter
+namespace sst::generate {
+  auto key::format(Identifier const &i) -> identifier::Formatter {
+    return identifier::Formatter{i};
+  }
+}
+#import std.equal
+#import std.mismatch
+namespace sst::generate {
+  auto key::operator==(Identifier const &a, Identifier const &b) -> bool {
+    return std::equal(a.begin(), a.end(), b.begin(), b.end());
+  }
+  auto key::operator!=(Identifier const &a, Identifier const &b) -> bool {
+    auto const ae = a.end();
+    auto const be = b.end();
+    auto const missed = std::mismatch(a.begin(), a.end(), b.begin(), b.end());
+    return ae != missed.first || be != missed.second;
+  }
+}
+#import nonstd.uninitialized.zero
+sst::generate::key::Identifier::Identifier() : ancestor{} {
+  // WATCHOUT - the default constructor of https://en.cppreference.com/w/cpp/container/array
+  // <quote>initializes the array following the rules of aggregate initialization
+  // (note that default initialization may result in indeterminate values for non-class T) </quote>
+  nonstd::uninitialized::zero(data(), size());
+}
+#import iab.privacychain.detail.debyte
+sst::generate::key::Identifier::Identifier(uuid::Container const &uu) {
+  //
+  // Note: the fingerprint(...) function does the inverse of this.
+  //
+  // Because the implementation of Identifier doesn't allow memory-level access
+  // we have to access every individual bit of the uuid to position it into the Identifier.
+  //
+  // Recall the endian sense
+  // - the array is naturally "little endian"
+  // - the characters are *pictured* in big endian, but we access them atomically in any order
+  //
+  // array<bool> -> b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 bA bB bC bD bE bF
+  //                    ...pictured...          ...pictured...
+  // array<char>    <------76543210-------> <------FEDCBA98------>
+  //
+  auto &self{*this};
+  static_assert(128/8 == sizeof (uu.value));
+  unsigned i{0};
+  for (auto u : uu.value) {
+    using iab::privacychain::detail::debyte; // [[FIXTHIS]] put this into tunitas' general bag of tricks
+    for (auto b : debyte(u)) {
+      self[i++] = b;
+    }
+  }
+}
+sst::generate::key::Identifier::Identifier(std::uint64_t hi, std::uint64_t lo) {
+  auto &self{*this};
+  auto const WIDTH = 8*sizeof (hi);
+  static_assert(64 == WIDTH);
+  int position{0};
+  auto merge = [&self](int &position, std::uint64_t specimen) {
+                 for (int i{0}, e{WIDTH}; e != i; ++i, ++position) { 
+                   auto const mask = 1lu << i;
+                   auto const bit = 0 != (mask & specimen);
+                   self[position] = bit;
+                 }
+               };
+  merge(position, lo);
+  merge(position, hi);
+}
+#endiv
+#divert <cpp>
+namespace sst::generate::key {
+  auto const BYTES = 128/8;
+  // reminder ... the Identifier is not the size you think it is.
+  // reminder ... we are choosing NOT to use nonstd::uint128_t for the (private) implementation of Identifier.
+  static_assert(BYTES != sizeof (std::array<bool, 128>));
+  static_assert(BYTES != sizeof (Identifier));
+}
+#endiv
