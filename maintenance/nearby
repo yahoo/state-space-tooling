@@ -70,6 +70,7 @@ fi
 : ${with_hyperledger_fabric_sdk:=${with_siblings?}/fabric-sdk-c++}
 : ${with_iab_privacychain_sdk:=${with_siblings?}/PrivacyChain-sdk-c++}
 : ${with_module_json:=${with_scold_nearby?}/module-json}
+: ${with_module_leveldb:=${with_scold_nearby?}/module-leveldb}
 : ${with_module_nonstd:=${with_scold_nearby?}/module-nonstd}
 : ${with_module_options:=${with_scold_nearby?}/module-options}
 : ${with_module_rabinpoly:=${with_scold_nearby?}/module-rabinpoly}
@@ -95,6 +96,7 @@ eval \
     ${with_hyperledger_fabric_sdk:+--with-hyperledger-fabric-sdk=$with_hyperledger_fabric_sdk} \
     ${with_iab_privacychain_sdk:+--with-iab-privacychain-sdk=$with_iab_privacychain_sdk} \
     ${with_module_json:+--with-module-json=$with_module_json} \
+    ${with_module_leveldb:+--with-module-leveldb=$with_module_leveldb} \
     ${with_module_nonstd:+--with-module-nonstd=$with_module_nonstd} \
     ${with_module_options:+--with-module-options=$with_module_options} \
     ${with_module_posix:+--with-module-posix=$with_module_posix} \

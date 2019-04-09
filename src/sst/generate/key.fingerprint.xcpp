@@ -78,10 +78,10 @@ auto sst::generate::key::packaging::fingerprint::function::fingerprint(Identifie
       fill = 0x0;
     }
   }
-#ifdef __DEBUG_FINGERPRINT__
-  std::cerr << "\n";
   auto start = &workspace[0];
   auto finish = start + sizeof (workspace);
+#ifdef __DEBUG_FINGERPRINT__
+  std::cerr << "\n";
   std::cerr << "fingerprint of " << format(specimen) << " will be " << format(rabinpoly::generate(start, finish)) << '\n'; 
   std::cerr << "workspace=";
   for (auto c : workspace) {

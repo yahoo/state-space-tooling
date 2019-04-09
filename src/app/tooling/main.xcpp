@@ -1,11 +1,12 @@
 // This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
 // Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
 #divert <hpp>
+#import app.tooling.Configuration
 #import c.argv
 #import c.const_vector
+#import std.ostream
 #import std.string
 #import sys.exits.Code
-#import app.tooling.Configuration
 namespace app::tooling {
   using Argv = c::const_vector;
   auto main(c::argv) -> sys::exits::Code;
@@ -44,21 +45,21 @@ auto main(int cc, char *vv[]) -> int {
   return app::tooling::main(c::argv(cc, vv));
 }
 #import c.rest
+#import hyperledger.fabric.tls.from_string.Endpoints
+#import nonstd.exception.Unreachable
+#import options.logging // module-options-devel >= 0.16.0? use cli::logging or such
 #import std.cerr
 #import std.cout
 #import std.exception
 #import std.string
 #import std.string_literals
 #import sys.exits.constants
-#import nonstd.exception.Unreachable
-#import options.logging // module-options-devel >= 0.16.0? use cli::logging or such
-#import hyperledger.fabric.tls.from_string.Endpoints
 using namespace std::string_literals;
 auto app::tooling::main(c::argv av) -> sys::exits::Code try {
   Configuration cfg{Configuration::Program{av.front()}};
   fixenv(cfg);
-  auto vv = c::rest(av);
   auto ecode = sys::exits::OK;
+  auto vv = c::rest(av);
   for ( ; vv.size(); vv=c::rest(vv)) {
     std::string const option = vv.front();
     if (option.empty() || '-' != option.front()) {

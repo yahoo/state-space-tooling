@@ -1,0 +1,79 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::database {
+  //
+  // The hyperledger Fabric's database's location
+  // Manage the naming conventions of LevelDB.
+  //
+  // Provide a higher abstraction towards sstropriateness & existence of the database
+  // before attempting to open the database (e.g. to dump it).
+  //
+  // Recall that a leveldb "database" is nominated a directory.
+  // The database directory name is the directory with .../LOCK within it.
+  // e.g. /var/hyperledger/fabric/production/ledgersData/stateLeveldb
+  //
+  // [[FIXTHIS]] Arguably this should be part a more general support package
+  //    in fabric-sdk-c++ in namespace hyperledger::fabric 
+  //    in module-leveldb in namespace level::db2
+  //
+  // Nomenclature:
+  //
+  //   The api-facing pathname is the location of the Hyperledger Fabric area as a whole
+  //       "/var/hyperledger/fabric/production
+  //
+  //   Encapsulated into this Location class is the location of the world-state database as
+  //       "/var/hyperledger/fabric/production/ledgersData/stateLeveldb
+  //
+  // Usage:
+  //
+  //   auto someplace = std::filesystem::path{...somehow...};
+  //   auto someplace = std::filesystem::path{"/var/hyperledger/fabric/production"};
+  //   datbase::Location location{someplace};
+  //   if (!location.probe()) {
+  //      cerr << "the location " << location << " does not sstear to be a Hyperledger Fabric (LevelDB) datbase\n";
+  //     ...etc...
+  //   }
+  //   database::State state{location}; ... acquire by RAII
+  //
+  class Location;
+}
+#endiv
+#divert <hpp>
+#import std.filesystem.path
+class sst::database::Location : public std::filesystem::path {
+  using ancestor = std::filesystem::path;
+public:
+  using Filepath = std::filesystem::path;
+  inline explicit Location(Filepath);
+  // Is it likely that there exists a (Hyperledger Fabric LevelDB) database at this location?
+  auto probe() const -> bool;
+};
+#endiv
+#divert <ipp>
+sst::database::Location::Location(Filepath filepath)
+  : ancestor{filepath}
+{ }
+#endiv
+#divert <cpp>
+#import sys.posix.exists
+auto sst::database::Location::probe() const -> bool {
+  //
+  // Witness:
+  //
+  //   .../production/ledgersData/stateLeveldb/
+  //   .../production/ledgersData/stateLeveldb/000009.ldb
+  //   .../production/ledgersData/stateLeveldb/LOG
+  //   .../production/ledgersData/stateLeveldb/LOCK
+  //   .../production/ledgersData/stateLeveldb/CURRENT
+  //   .../production/ledgersData/stateLeveldb/MANIFEST-000000
+  //   .../production/ledgersData/stateLeveldb/000007.log
+  //
+  auto LOG = *this / "LOG";
+  auto LOCK = *this / "LOCK"; // only extant when the database is live (ahem. when locked)
+  auto CURRENT = *this / "CURRENT";
+  auto MANIFEST = *this / "MANIFEST-000000";
+  using sys::posix::exists;
+  return exists(LOG) && exists(CURRENT) && exists(MANIFEST);
+}
+#endiv

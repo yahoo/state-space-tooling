@@ -23,6 +23,7 @@ include @temerarious_flagship_datadir@/am/build.am
 # You do not need them unless you are doing co-development of these packages *with* PrivacyChain SDK C++
 DEVELOPMENT_AREAS = \
   $(module_json_prefix) \
+  $(module_leveldb_prefix) \
   $(module_nonstd_prefix) \
   $(module_options_prefix) \
   $(module_posix_prefix) \
@@ -63,12 +64,14 @@ clean-dependencies::
 clean-local:: clean-dependencies
 
 include src/sst/Makefrag.am
+include src/app/dumping/Makefrag.am
 include src/app/keying/Makefrag.am
 include src/app/tooling/Makefrag.am
 include src/tests/unit/Makefrag.am
 include src/want/Makefrag.am
 
 bin_PROGRAMS = \
+  $(bin_pcd) \
   $(bin_pct) \
   $(bin_pck) \
   $(end)
@@ -84,15 +87,18 @@ check_PROGRAMS = \
   $(end)
 
 include tests/unit/Makefrag.am
+include tests/pcd/Makefrag.am
 include tests/pck/Makefrag.am
 include tests/pct/Makefrag.am
 XFAIL_TESTS = \
   $(tests_unit_XFAIL_TESTS) \
+  $(tests_pcd_XFAIL_TESTS) \
   $(tests_pck_XFAIL_TESTS) \
   $(tests_pct_XFAIL_TESTS) \
   $(end)
 TESTS = \
   $(tests_unit_TESTS) \
+  $(tests_pcd_TESTS) \
   $(tests_pck_TESTS) \
   $(tests_pct_TESTS) \
   $(end)

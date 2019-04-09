@@ -30,10 +30,16 @@ lib_libsst_la_LIBADD = \
   $(lib_lib_want.la) \
   -liab-privacychain \
   -luuid-module \
+  -llevel-module \
   $(end)
 lib_libsst_la_MODULES = $(call TF_SOURCEStoMODULES, $(lib_libsst_la_SOURCES))
 lib_libsst_la_SOURCES = \
   obj/src/sst/namespace.cpp \
+  \
+  obj/src/sst/database/namespace.cpp \
+  obj/src/sst/database/Location.cpp \
+  obj/src/sst/database/State.cpp \
+  \
   obj/src/sst/generate/namespace.cpp \
   obj/src/sst/generate/key.fingerprint.cpp \
   obj/src/sst/generate/key.Pair.cpp \

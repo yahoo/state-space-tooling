@@ -48,6 +48,7 @@ TF_WITH_SUBSYSTEM([iab-privacychain-sdk], [], [The IAB PrivacyChain C++ Client-s
 
 # And mention these in $(DEVELOPMENT_AREAS) in Makefile.am
 TF_WITH_MODULE([json])
+TF_WITH_MODULE([leveldb])
 TF_WITH_MODULE([nonstd])
 TF_WITH_MODULE([options])
 TF_WITH_MODULE([posix])

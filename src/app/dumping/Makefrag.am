@@ -1,0 +1,20 @@
+# Not so obviously, this is a GNU -*- Makefile -*- which is included by automake, not by GNU make
+# Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+bin_pcd = bin/pcd
+bin_pcd_LDADD = \
+  $(lib_libsst_la) \
+  $(end)
+# Reminder: autotools does not put $(AM_LDFLAGS) into bin_pcd_LDFLAGS, like it does with CPPFLAGS and CXXFLAGS
+bin_pcd_LDFLAGS = $(PACKAGE_LDFLAGS_SET)
+bin_pcd_MODULES = $(call TF_SOURCEStoMODULES, $(bin_pcd_SOURCES))
+bin_pcd_SOURCES = \
+  obj/src/app/dumping/namespace.cpp \
+  obj/src/app/dumping/main.cpp \
+  obj/src/app/dumping/Configuration.cpp \
+  $(end)
+$(scold_cxxdir)/app/dumping/dependencies.mk:
+	$(TF_V_DIS) $(call TF_DISAGGREGATE, $(bin_pcd_SOURCES))
+	$(TF_V_DONE) test -e $@
+include $(scold_cxxdir)/app/dumping/dependencies.mk
+clean-dependencies::
+	rm -f $(scold_cxxdir)/app/dumping/dependencies.mk

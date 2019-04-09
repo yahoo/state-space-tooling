@@ -1,0 +1,24 @@
+tests_pcd_XFAIL_TESTS = \
+  tests/pcd/run.01.test \
+  tests/pcd/run.02.test \
+  tests/pcd/run.03.test \
+  $(end)
+tests_pcd_TESTS = \
+  tests/pcd/dryrun.usage.test \
+  tests/pcd/dryrun.help.test \
+  tests/pcd/dryrun.h.test \
+  \
+  tests/pcd/dryrun.version.test \
+  tests/pcd/dryrun.V.test \
+  \
+  tests/pcd/run.empty.test \
+  tests/pcd/run.usage.test \
+  tests/pcd/run.version.test \
+  \
+  $(tests_pcd_XFAIL_TESTS) \
+  $(end)
+
+tests_pcd_TESTS_DECLARED = $(tests_pcd_TESTS)
+tests_pcd_TESTS_OBSERVED = $(wildcard tests/pcd/*.test)
+tests_pcd_TESTS_ORPHANED = $(filter-out $(tests_pcd_TESTS_DECLARED), $(tests_pcd_TESTS_OBSERVED))
+$(if $(tests_pcd_TESTS_ORPHANED), $(error orphaned tests $(tests_pcd_TESTS_ORPHANED)))

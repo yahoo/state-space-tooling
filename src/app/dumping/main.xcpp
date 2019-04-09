@@ -1,0 +1,125 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <hpp>
+#import c.argv
+#import c.const_vector
+#import sys.exits.Code
+#import std.ostream
+#import app.dumping.Configuration
+namespace app::dumping {
+  using Argv = c::const_vector;
+  auto main(c::argv) -> sys::exits::Code;
+  auto dump(Configuration const &, std::ostream &, std::string const &location) -> sys::exits::Code;
+  auto usage(Configuration const &, std::ostream &, sys::exits::Code) -> sys::exits::Code;
+  auto version(Configuration const &, std::ostream &) -> sys::exits::Code;
+  auto unknown(Configuration const &, std::string const &cmd) -> sys::exits::Code;
+}
+#endiv
+#divert <cpp>
+auto main(int cc, char *vv[]) -> int {
+  return app::dumping::main(c::argv(cc, vv));
+}
+#import app.dumping.Configuration
+#import c.rest
+#import options.logging
+#import std.cerr
+#import std.cout
+#import std.exception
+#import std.string
+#import std.string_literals
+#import sys.exits.constants
+using namespace std::string_literals;
+auto app::dumping::main(c::argv av) -> sys::exits::Code try {
+  Configuration cfg{Configuration::Program{av.front()}};
+  auto ecode = sys::exits::OK;
+  auto vv = c::rest(av);
+  for ( ; vv.size(); vv=c::rest(vv)) {
+    std::string const option = vv.front();
+    if (option.empty() || '-' != option.front()) {
+      break;
+    }
+    if (false) {
+    } else if ("--"s == option) {
+      vv = c::rest(vv);
+      break;
+    } else if ("--usage"s == option || "--help"s == option || "-h"s == option) {
+      return usage(cfg, std::cout, sys::exits::OK);
+    } else if ("--version"s == option || "-V"s == option) {
+      return version(cfg, std::cout);
+    } else if ("--dryrun"s == option || "--dry-run"s == option || "-y"s == option) {
+      cfg.dry_run_mode = true;
+    } else if ("--warnings"s == option || "--warning"s == option || "-w"s == option) {
+      cfg.warning_mode = true;
+    } else if ("--quiet"s == option || "-q"s == option) {
+      cfg.quiet_mode = true;
+    } else if ("--verbose"s == option || "-v"s == option) {
+      cfg.verbose_mode = true;
+    } else if ("--debug"s == option || "-d"s == option) {
+      cfg.debug_mode = true;
+    } else {
+      error(cfg) << "unknown option " << option << '\n';
+      return sys::exits::CONFIG;
+    }
+  }
+  if (0 == vv.size()) {
+    error(cfg) << "no database location was given\n";
+    ecode &= sys::exits::FAIL;
+  } else if (1 != vv.size()) {
+    error(cfg) << "only single database location may be given\n";
+    ecode &= sys::exits::FAIL;
+  }
+  if (!ok(ecode)) {
+    // the error was already complained about
+    return ecode;
+  }
+  return dump(cfg, std::cout, vv.front());
+} catch (std::exception const &e) {
+  std::cerr << "dumping: unexpected exception " << e.what() << '\n';
+  return sys::exits::SOFTWARE;
+}
+auto app::dumping::usage(Configuration const &cfg, std::ostream &out, sys::exits::Code code) -> sys::exits::Code {
+  out << "usage: " << cfg.NAME
+      << (" [...options...] database-location\n"
+          "\n"
+          "The database location is probably /var/hyperledger/fabric/production\n"
+          "\n"
+          "within that area, the world-state database wil be discovered\n"
+          "\n"
+          "General Options:\n"
+          "  --usage, --help                       show this message\n"
+          "  --version                             exhibit the version and quit\n"
+          "  --warnings, --warning                 warnings mode\n"
+          "  --quiet                               Shut. Up.  is independent of --verbose\n"
+          "  --verbose                             verbose mode\n"
+          "  --dryrun, --dry-run                   dry run, do not do anything\n"
+          "  --debug                               debug mode (you should not need this)\n")
+          ;
+  return code;
+}
+#include "config.h" // PACKAGE_VERSION as a #define (yuk!)
+auto app::dumping::version(Configuration const &cfg, std::ostream &out) -> sys::exits::Code {
+  out << cfg.NAME << ": version " << PACKAGE_VERSION << '\n';
+  return sys::exits::OK;
+}
+auto app::dumping::unknown(Configuration const &cfg, std::string const &cmd) -> sys::exits::Code {
+  error(cfg) << "unknown subcommand '" << /*format::q*/ cmd << "'\n";
+  return sys::exits::CONFIG;
+}
+#import sst.database.Location
+#import sst.database.State
+#import level.db2.as
+auto app::dumping::dump(Configuration const &cfg, std::ostream &outbound, std::string const &cli_indicated_location) -> sys::exits::Code {
+  sst::database::Location location{cli_indicated_location};
+  if (!location.probe()) {
+    error(cfg) << "the location " << location << " does not appear to contain a Hyperledger Fabric world-state database (LevelDB)\n";
+    return sys::exits::FAIL;
+  }
+  sst::database::State state{location};
+  for (auto const &pair : state.range()) {
+    using level::db2::as;
+    outbound << "K:" << as<std::string_view>(pair.first) << '\n'
+             << "V:" << as<std::string_view>(pair.second) << '\n';
+  }
+  return sys::exits::OK;
+}
+#endiv
