@@ -9,6 +9,7 @@ bin_pcd_LDFLAGS = $(PACKAGE_LDFLAGS_SET)
 bin_pcd_MODULES = $(call TF_SOURCEStoMODULES, $(bin_pcd_SOURCES))
 bin_pcd_SOURCES = \
   obj/src/app/dumping/namespace.cpp \
+  obj/src/app/dumping/defaults.cpp \
   obj/src/app/dumping/main.cpp \
   obj/src/app/dumping/Configuration.cpp \
   $(end)

@@ -31,7 +31,7 @@ namespace sst::database {
   //   auto someplace = std::filesystem::path{"/var/hyperledger/fabric/production"};
   //   datbase::Location location{someplace};
   //   if (!location.probe()) {
-  //      cerr << "the location " << location << " does not sstear to be a Hyperledger Fabric (LevelDB) datbase\n";
+  //      cerr << "the location " << location << " does not appear to be a Hyperledger Fabric (LevelDB) datbase\n";
   //     ...etc...
   //   }
   //   database::State state{location}; ... acquire by RAII
@@ -61,19 +61,20 @@ auto sst::database::Location::probe() const -> bool {
   //
   // Witness:
   //
+  //   /var/hyperledger/fabric/production/...
+  //
   //   .../production/ledgersData/stateLeveldb/
-  //   .../production/ledgersData/stateLeveldb/000009.ldb
+  //   .../production/ledgersData/stateLeveldb/000009.ldb <--- ibidem.
   //   .../production/ledgersData/stateLeveldb/LOG
   //   .../production/ledgersData/stateLeveldb/LOCK
   //   .../production/ledgersData/stateLeveldb/CURRENT
-  //   .../production/ledgersData/stateLeveldb/MANIFEST-000000
+  //   .../production/ledgersData/stateLeveldb/MANIFEST-000000 <------- can have other names
   //   .../production/ledgersData/stateLeveldb/000007.log
   //
   auto LOG = *this / "LOG";
-  auto LOCK = *this / "LOCK"; // only extant when the database is live (ahem. when locked)
+  auto LOCK = *this / "LOCK"; // only extant when the database is live? (ahem. when locked)
   auto CURRENT = *this / "CURRENT";
-  auto MANIFEST = *this / "MANIFEST-000000";
   using sys::posix::exists;
-  return exists(LOG) && exists(CURRENT) && exists(MANIFEST);
+  return exists(LOG) && exists(CURRENT);
 }
 #endiv

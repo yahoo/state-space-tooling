@@ -4,12 +4,14 @@
 #import c.argv
 #import c.const_vector
 #import sys.exits.Code
+#import std.string
+#import std.filesystem.path
 #import std.ostream
 #import app.dumping.Configuration
 namespace app::dumping {
   using Argv = c::const_vector;
   auto main(c::argv) -> sys::exits::Code;
-  auto dump(Configuration const &, std::ostream &, std::string const &location) -> sys::exits::Code;
+  auto dump(Configuration const &, std::ostream &, std::filesystem::path const &location) -> sys::exits::Code;
   auto usage(Configuration const &, std::ostream &, sys::exits::Code) -> sys::exits::Code;
   auto version(Configuration const &, std::ostream &) -> sys::exits::Code;
   auto unknown(Configuration const &, std::string const &cmd) -> sys::exits::Code;
@@ -20,6 +22,7 @@ auto main(int cc, char *vv[]) -> int {
   return app::dumping::main(c::argv(cc, vv));
 }
 #import app.dumping.Configuration
+#import app.dumping.defaults
 #import c.rest
 #import options.logging
 #import std.cerr
@@ -61,38 +64,44 @@ auto app::dumping::main(c::argv av) -> sys::exits::Code try {
       return sys::exits::CONFIG;
     }
   }
-  if (0 == vv.size()) {
-    error(cfg) << "no database location was given\n";
-    ecode &= sys::exits::FAIL;
-  } else if (1 != vv.size()) {
-    error(cfg) << "only single database location may be given\n";
-    ecode &= sys::exits::FAIL;
-  }
+  auto [locode, location] = [&cfg, &vv]() -> std::tuple<sys::exits::Code, std::filesystem::path> {
+                               if (0 == vv.size()) {
+                                 notice(cfg) << "no database location was given, defaulting to " << defaults::LOCATION << '\n';
+                                 return {sys::exits::OK, defaults::LOCATION};
+                               } else if (1 == vv.size()) {
+                                 return {sys::exits::OK, vv.front()};
+                               } else {
+                                 error(cfg) << "only single database location may be given\n";
+                                 return {sys::exits::FAIL, {}};
+                               }
+  }();
+  ecode &= locode;
   if (!ok(ecode)) {
     // the error was already complained about
     return ecode;
   }
-  return dump(cfg, std::cout, vv.front());
+  return dump(cfg, std::cout, location);
 } catch (std::exception const &e) {
   std::cerr << "dumping: unexpected exception " << e.what() << '\n';
   return sys::exits::SOFTWARE;
 }
 auto app::dumping::usage(Configuration const &cfg, std::ostream &out, sys::exits::Code code) -> sys::exits::Code {
+  auto production = defaults::LOCATION;
+  auto worldstate = production / "ledgersData/stateLeveldb"s;
   out << "usage: " << cfg.NAME
-      << (" [...options...] database-location\n"
+      << (" [...options...] [ database-location ]\n"
           "\n"
-          "The database location is probably /var/hyperledger/fabric/production\n"
-          "\n"
-          "within that area, the world-state database wil be discovered\n"
-          "\n"
+          "The Hyperledger Fabric work area is probably within ") << production << '\n'
+      << ("The world-state LevelDB database is probably at     ") << worldstate << '\n'
+      << ("\n"
           "General Options:\n"
-          "  --usage, --help                       show this message\n"
-          "  --version                             exhibit the version and quit\n"
-          "  --warnings, --warning                 warnings mode\n"
-          "  --quiet                               Shut. Up.  is independent of --verbose\n"
-          "  --verbose                             verbose mode\n"
-          "  --dryrun, --dry-run                   dry run, do not do anything\n"
-          "  --debug                               debug mode (you should not need this)\n")
+          "  --usage, --help                       Show this message\n"
+          "  --version                             Exhibit the version and quit\n"
+          "  --warnings, --warning                 Warnings mode\n"
+          "  --quiet                               Shut. Up.  This is independent of --verbose\n"
+          "  --verbose                             Verbose mode\n"
+          "  --dryrun, --dry-run                   Dry run, do not do anything\n"
+          "  --debug                               Debug mode (you should not need this)\n")
           ;
   return code;
 }
@@ -108,11 +117,17 @@ auto app::dumping::unknown(Configuration const &cfg, std::string const &cmd) -> 
 #import sst.database.Location
 #import sst.database.State
 #import level.db2.as
-auto app::dumping::dump(Configuration const &cfg, std::ostream &outbound, std::string const &cli_indicated_location) -> sys::exits::Code {
+auto app::dumping::dump(Configuration const &cfg, std::ostream &outbound, std::filesystem::path const &cli_indicated_location) -> sys::exits::Code {
   sst::database::Location location{cli_indicated_location};
   if (!location.probe()) {
-    error(cfg) << "the location " << location << " does not appear to contain a Hyperledger Fabric world-state database (LevelDB)\n";
-    return sys::exits::FAIL;
+    sst::database::Location relocation{cli_indicated_location / defaults::WORLDSTATE};
+    if (relocation.probe()) {
+      notice(cfg) << "the location " << location << " implies " << relocation << '\n';
+      location = relocation;
+    } else {
+      error(cfg) << "the location " << location << " does not appear to contain a Hyperledger Fabric world-state database (LevelDB)\n";
+      return sys::exits::FAIL;
+    }
   }
   sst::database::State state{location};
   for (auto const &pair : state.range()) {
