@@ -1,0 +1,144 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace tests::unit::database { class Fixture; }
+#endiv
+#divert <hpp>
+#import cppunit.Test
+#import cppunit.test.Fixture
+#import std.filesystem.path
+class tests::unit::database::Fixture : public cppunit::test::Fixture {
+public:
+  auto test_Location() -> void;
+  auto test_Key() -> void;
+  auto test_Record() -> void;
+  auto test_State() -> void;
+  static auto suite() -> cppunit::Test *;
+private:
+  static auto open_write_close(std::filesystem::path const &) -> void;
+};
+#endiv
+#divert <cpp>
+#import sst.database.Location
+auto tests::unit::database::Fixture::test_Location() -> void {
+  ::sst::database::Location subject{"/var/hyperledger/fabric"};
+  auto probed = subject.probe();
+  CPPUNIT_ASSERT(false == probed); // there won't be a database there and/or it isn't accessible to you (the tester)
+}
+#import sst.database.Key
+auto tests::unit::database::Fixture::test_Key() -> void {
+  //
+  //   subkey ---------------------------------------\ (here)
+  //   chaincode -----------------------\            |
+  //   channel ----------\              |            |
+  //                     |              v            v
+  //                     |<------>|    |<------>|   |<-----------------------------|g
+  auto const specimen = "microphone\000chaincode\00050cbaa9d2d4d4ed88bdf12168f0a05cc"sv;
+  ::sst::database::Key subject{level::db2::Slice{specimen.data(), specimen.size()}};
+  CPPUNIT_ASSERT_EQUAL("microphone"sv, (std::string_view) subject.channel());
+  CPPUNIT_ASSERT_EQUAL("chaincode"sv, (std::string_view) subject.chaincode());
+  CPPUNIT_ASSERT_EQUAL("50cbaa9d2d4d4ed88bdf12168f0a05cc"sv, (std::string_view) subject.subkey());
+}
+#import sst.database.Record
+#import iab.privacychain.schema
+auto tests::unit::database::Fixture::test_Record() -> void {
+  //
+  //           schema type indicator-----\ (here; i.e. it is 'b' indicating raw json underneath the base64)
+  //                                     |
+  //                                     |
+  //                     <-----eight---->v<----------------------- base64 payload ----------->
+  auto const specimen = "\0\1\2\3\4\5\6\7bSGkgSSdtIE1heW9yIEVkIEtvY2gsIEhvdyBhbSBJIGRvaW5nPw=="sv;
+  ::sst::database::Record subject{level::db2::Slice{specimen.data(), specimen.size()}};
+  CPPUNIT_ASSERT_EQUAL("\0\1\2\3\4\5\6\7"sv, (std::string_view) subject.header());
+  CPPUNIT_ASSERT(iab::privacychain::schema::Version::V2 == subject.version());
+  CPPUNIT_ASSERT_EQUAL("SGkgSSdtIE1heW9yIEVkIEtvY2gsIEhvdyBhbSBJIGRvaW5nPw=="sv, (std::string_view) subject.payload());
+  subject.payload<2>();
+  subject.payload<3>();
+  subject.payload<4>();
+  subject.payload<5>();
+  subject.payload<6>();
+  subject.payload<7>();
+  subject.payload<8>();
+  try {
+    // A one thousand byte subject version indicator
+    subject.payload<1000>();
+    CPPUNIT_ASSERT(false);
+  } catch (::level::db2::exception::Aspect const &) {
+    CPPUNIT_ASSERT(true);
+  }
+}
+#import level.db2.options.Open
+#import level.db2.options.Write
+#import level.db2.open
+#import level.db2.Slice
+#import level.db2.exception.Status
+#import std.move
+auto tests::unit::database::Fixture::open_write_close(std::filesystem::path const &filepath) -> void {
+  auto db = [&filepath]() {
+              auto open_options = level::db2::options::Open{};
+              open_options.create_if_missing = true;
+              auto opened = level::db2::open(filepath, open_options);
+              if (!ok(opened)) {
+                // reminder: don't throw Status directly because it has an unsafe (throw-capable) copy constructor
+                throw level::db2::exception::Status{error_status(opened)};
+              }
+              return value(std::move(opened));
+            }();
+  {
+    auto write_options = level::db2::options::Write{};
+    auto key_basis = "hello"s;
+    auto value_basis = "world"s;
+    auto key = level::db2::Slice{key_basis.begin(), key_basis.end()};
+    auto value = level::db2::Slice{value_basis.begin(), value_basis.end()};
+    auto put = db->Put(write_options, key, value);
+    if (!put.ok()) {
+      // reminder: don't throw Status directly because it has an unsafe (throw-capable) copy constructor
+      throw level::db2::exception::Status{put};
+    }
+  }
+}
+#import getpid
+#import level.db2.Status
+#import sst.database.State
+#import std.error_code
+#import std.filesystem.exists
+#import std.filesystem.path
+#import std.to_string
+auto tests::unit::database::Fixture::test_State() -> void {
+  try {
+    // [[FIXTHIS]] - make the unit tests work wherever
+    // [[WATCHOUT]] - the test rigging runs many of these in parallel, and the all.test and database.test can *both* run this test
+    // Trick: put the test in the obj directory because that directory is naturally (safely) removed on 'make distclean'
+    auto const filepath = std::filesystem::path{"./obj/t99.tests_unit_database_Fixture_test_State."s + std::to_string(getpid()) + ".leveldb"s};
+    open_write_close(filepath);
+    ::sst::database::Location location{filepath};
+    ::sst::database::State state{location}; // <------------------------------ test this
+    auto count{0u};
+    for (auto _ : state.range()) {
+      _ = _; // unused, shutup the compiler
+      ++count;
+    }
+    // We're not testing the iterator in this test case, so it doesn't matter of this loop is executed zero times
+    CPPUNIT_ASSERT(1 <= count);
+  } catch (level::db2::Status const &st) {
+    std::cerr << "could not open the database because " << /*everyone has to do it differently*/ st.ToString() << '\n';
+    CPPUNIT_ASSERT(false);
+  } catch (std::error_code const &ec) {
+    std::cerr << "could not open the database because " << ec.message() << '\n';
+    CPPUNIT_ASSERT(false);
+  }
+}
+#import unit.rigging.suite.Stream
+#import unit.rigging.suite.call
+#import unit.rigging.suite.add
+auto tests::unit::database::Fixture::suite() -> cppunit::Test * {
+  using namespace ::unit::rigging::suite;
+  Stream series("database");
+  series << call("Location", &Fixture::test_Location)
+         << call("Key", &Fixture::test_Key)
+         << call("Record", &Fixture::test_Record)
+         << call("State", &Fixture::test_State)
+    ;
+  return series.release();
+}
+#endiv

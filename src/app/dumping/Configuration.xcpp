@@ -18,6 +18,7 @@ namespace app::dumping {
 #divert <hpp>
 #import options.Program // module-options-devel >= 0.16.0 or later use cli::options::Program or such
 #import options.config.Generic // module-options-devel >= 0.16.0 or later use cli::configuration::Generic or such
+#import options.Boolean
 #import std.optional
 #import std.filesystem.path
 class app::dumping::Configuration : public options::config::Generic {
@@ -29,6 +30,9 @@ public:
   // The database directory name is the directory with .../LOCK within it.
   // e.g. /var/hyperledger/fabric/production/ledgersData/stateLeveldb
   std::optional<std::filesystem::path> leveldb_database_location;
+  // Emit the records as raw as possible
+  // The default is cooked ... meaning be pretty.
+  ::options::Boolean raw_mode;
 };
 #endiv
 #divert <ipp>

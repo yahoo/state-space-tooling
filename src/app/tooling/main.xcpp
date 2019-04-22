@@ -288,7 +288,7 @@ auto app::tooling::history(Configuration &cfg, Argv vv) -> sys::exits::Code {
   auto &out{std::cout};
   for (auto const &rec : value(got)) {
 #warning WRITETHIS out << format(tx) << '\n';
-    out << "transaction\n";
+    out << "transaction -- TODO write format(tx)\n";
   }
   return sys::exits::OK;
 }

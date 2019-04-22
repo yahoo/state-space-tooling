@@ -1,6 +1,7 @@
 // This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
 // Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
 #divert <cpp>
+#import tests.unit.database.Fixture
 #import tests.unit.generate.Fixture
 #import tests.unit.key.Fixture
 #import tests.unit.sst.Fixture
@@ -8,7 +9,8 @@
 #import rigging.bench.Main
 auto main(int argc, char *argv[]) -> int {
   namespace tu = tests::unit;
-  rigging::bench::Main remain(tu::generate::Fixture::suite(),
+  rigging::bench::Main remain(tu::database::Fixture::suite(),
+                              tu::generate::Fixture::suite(),
                               tu::key::Fixture::suite(),
                               tu::sst::Fixture::suite(),
 			      tu::want::Fixture::suite());

@@ -1,0 +1,85 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::database {
+  //
+  // A Hyperledger Fabric database key is made up of three parts
+  //
+  // Is RAII.
+  // if the key is malformed then a level::db2::exception::Aspect (descendant) is thrown.
+  // e.g. level::db2::Corruption
+  //      level::db2::Invariant
+  //      etc.
+  //
+  // Lifetime
+  //
+  //   the lifetime of the Key must be shorter than the lifetime of the LevelDB Iterator position whence it came.
+  //   i.e. the Key provides access ot the internals of an iterator position, which is consty storage manitained by the Iterator.
+  //        moving the iterator invalidates that position.
+  //
+  // Schema:
+  //
+  //          subkey -----------------------------------\ (here)
+  //          chaincode ---------------------\          |
+  //          channel -----------\           |          |
+  //                             |           v          v
+  //                             |<------>|  |<------>| |<-----------------------------|
+  //       Specimen             "microphone\0chaincode\050cbaa9d2d4d4ed88bdf12168f0a05cc"};
+  //                                       ^          ^
+  //                                       |          |
+  //        end channel -------------------/          |
+  //        end chaincode ----------------------------/  (the nul)
+  //
+  // Usage:
+  //
+  //   auto it = level::db2::Iterator{...somehow...};
+  //   auto const &pair = *it;
+  //   auto key = Key{pair.first};
+  //   auto const channel = key.channel();
+  //   auto const chaincode = key.chaincode();
+  //   auto const subkey = key.subkey();
+  //
+  class Key;
+}
+#endiv
+#divert <hpp>
+#import level.db2.Slice
+#import std.byte
+struct sst::database::Key {
+  inline explicit Key(level::db2::Slice);
+  using View = level::db2::Slice;
+  inline auto channel() const -> View;
+  inline auto chaincode() const -> View;
+  inline auto subkey() const -> View;
+private:
+  View outer;
+  using Octet = std::byte;
+  Octet const *end_channel;
+  Octet const *end_chaincode;
+  // Throws level::db2::exception::Invariant if a '\0' is not found within the bounds
+  inline static auto find(Octet const *start, Octet const *limit) -> Octet const *;
+};
+#endiv
+#divert <ipp>
+namespace sst::database {
+  Key::Key(level::db2::Slice source)
+    : outer{source}
+    , end_channel{find(source.data(), source.end())}
+    , end_chaincode{find(end_channel+1, source.end())}
+  { }
+  auto Key::channel() const -> View   { return View{outer.begin(), end_channel}; }
+  auto Key::chaincode() const -> View { return View{1+end_channel, end_chaincode}; }
+  auto Key::subkey() const -> View    { return View{1+end_chaincode, outer.end()}; }
+}
+#import level.db2.exception.Invariant
+namespace sst::database {
+  auto Key::find(Octet const *start, Octet const *limit) -> Octet const * {
+    for (auto finish{start}; finish < limit; ++finish) {
+      if (std::byte{} == *finish) {
+        return finish;
+      }
+    }
+    throw level::db2::exception::Invariant{"key"};
+  }
+}
+#endiv

@@ -2,8 +2,9 @@
 // Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
 #divert <fpp>
 #import std.string_literals
+#import std.string_view_literals
 namespace tests::unit {
-  using namespace std::string_literals;
+  using namespace std::literals;
 }
 #endiv
 #divert <hpp>

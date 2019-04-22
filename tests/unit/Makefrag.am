@@ -1,6 +1,9 @@
 tests_unit_TESTS = \
   tests/unit/list.test \
   \
+  tests/unit/database.test \
+  tests/unit/generate.test \
+  tests/unit/key.test \
   tests/unit/sst.test \
   tests/unit/want.test \
   \

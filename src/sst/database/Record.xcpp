@@ -1,0 +1,104 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::database {
+  //
+  // A Hyperledger Fabric database record made up of some parts
+  //
+  // Is RAII.
+  // if the key is malformed then a level::db2::exception::Aspect (descendant) is thrown.
+  // e.g. level::db2::Corruption
+  //      level::db2::Invariant
+  //      etc.
+  //
+  // Lifetime:
+  //
+  //   the lifetime of the Key must be shorter than the lifetime of the LevelDB Iterator position whence it came.
+  //   i.e. the Key provides access ot the internals of an iterator position, which is consty storage manitained by the Iterator.
+  //        moving the iterator invalidates that position.
+  //
+  // Schema:
+  //
+  //  payload --------------\ (according to the PrivacyChain schema; e.g. 'b' + TCF)
+  //  magic ---------------\| (the magic announces the payload schema version)
+  //  header- -----\       ||
+  //               |       ||
+  //               |       ||
+  //               |       |v
+  //               v       v|<--------------payload------------>|
+  //               |<---->||<------------grossload------------->|
+  //               01234567M.....................................
+  //
+  // Usage:
+  //
+  //   auto it = level::db2::Iterator{...somehow...};
+  //   auto const &pair = *it;
+  //   auto record = Record{pair.second};
+  //   auto const payload = key.payload();
+  //
+  class Record;
+}
+#endiv
+#divert <hpp>
+#import level.db2.Slice
+#import std.byte
+#import iab.privacychain.schema // Version
+#import nonstd.basic_dope
+struct sst::database::Record {
+  inline explicit Record(level::db2::Slice);
+  using View = level::db2::Slice;
+  inline auto header() const -> View;
+  using Version = iab::privacychain::schema::Version;
+  inline auto version() const -> Version;
+  inline auto payload() const -> View;
+  inline auto payload(Version) const -> View;
+  template<std::size_t SUBHEADER_SIZE> inline auto payload() const -> View;
+private:
+  View outer;
+  using Octet = std::byte;
+  Octet const *end_header;
+  inline static constexpr auto MAGIC_EIGHT = 8;
+  using Dope = nonstd::basic_dope<Octet const>;
+  inline auto grossload() const -> Dope;
+};
+#endiv
+#divert <ipp>
+#import level.db2.exception.Invariant
+namespace sst::database {
+  Record::Record(level::db2::Slice source)
+    : outer{source}
+    , end_header{MAGIC_EIGHT + outer.data()} {
+    if (source.size() < MAGIC_EIGHT) {
+      throw level::db2::exception::Invariant{"record"};
+    }
+  }
+}
+#import iab.privacychain.schema // inspect(...)
+#import level.db2.as
+namespace sst::database {
+  auto Record::header() const -> View  { return View{outer.begin(), end_header}; }
+  auto Record::version() const -> Version {
+    auto inspected = iab::privacychain::schema::inspect(grossload());
+    if (!ok(inspected)) {
+      throw level::db2::exception::Invariant{"record"};
+    }
+    return value(inspected);
+  }
+  auto Record::payload() const -> View { return payload(version()); }
+  auto Record::payload(Version) const -> View {
+    // All known versions of PrivacyChain have an integral Magic (no compound magic ...yet)
+    return payload<sizeof (iab::privacychain::schema::Magic)>();
+  }
+  template<std::size_t N> auto Record::payload() const -> View {
+    if (0 == N || N >= outer.size() || end_header > outer.end() - N) {
+      throw level::db2::exception::Invariant{"record"};
+    }
+    // end_header+N <= end ... the true payload could be zero or more bytes
+    return View{end_header+N, outer.end()};
+  }
+  auto Record::grossload() const -> Dope {
+    auto const view = View{end_header, outer.end()};
+    return level::db2::as<Dope>(view);
+  }
+}
+#endiv

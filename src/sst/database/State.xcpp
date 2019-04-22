@@ -9,6 +9,13 @@ namespace sst::database {
   // RAII to acquire contact with the database.
   // Either construction occurs or an exception:Status is thrown.
   //
+  // Whereas this is the State Space Tooling package, there is no *write* interface.
+  // to the database.  You need to go through the Privacchain API or the Hyperledger Fabric API for that.
+  // This is a
+  //     <unvoiced>crude</unvoiced<<voiced>simple</voice>
+  // interface in support of database
+  //     <unvoiced>dumping</unvoiced><voiced>inspection</voiced>.
+  //
   // [[FIXTHIS]] Arguably this should be part a more general support package
   //    in fabric-sdk-c++ in namespace hyperledger::fabric 
   //    in module-leveldb in namespace level::db2
@@ -19,7 +26,7 @@ namespace sst::database {
   //     auto filepath = std::fileystem::path{...somehow...};
   //     auto filepath = std::fileystem::path{"/var/hyperledger/fabric/production"};
   //     database::Location location{filepath};
-  //     database:State state{location};
+  //     database::State state{location};
   //     for (auto pair : state.range()) {
   //       ...use the pair...   which is a std::pair<db2::Slice, db2::Slice>
   //     }

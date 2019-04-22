@@ -3,10 +3,11 @@
 #divert <fpp>
 //
 // Asked:    What does SST stand for?
-//           Is it "Super Sonic Transport"?, that sounds cool, but unmotivated by the problem at hand.
+//           Is it "Super Sonic Transport"?, that sounds cool ...
+//                                                            ... but is unmotivated by the problem at hand.
 //
 // Answered: State Space Tooling
-//           Oh, that makes sense.  Well, that's boring/
+//           Oh, that makes sense.  Well, that's boring!
 //
 // Alternatives: Single-Stream Transport (DisplayPort protocol)
 //               Structured Stream Transport (2007, MIT, https://pdos.csail.mit.edu/archive/uia/sst/

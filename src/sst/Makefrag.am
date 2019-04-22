@@ -39,6 +39,8 @@ lib_libsst_la_SOURCES = \
   obj/src/sst/database/namespace.cpp \
   obj/src/sst/database/Location.cpp \
   obj/src/sst/database/State.cpp \
+  obj/src/sst/database/Key.cpp \
+  obj/src/sst/database/Record.cpp \
   \
   obj/src/sst/generate/namespace.cpp \
   obj/src/sst/generate/key.fingerprint.cpp \
