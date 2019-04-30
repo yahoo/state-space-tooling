@@ -42,6 +42,13 @@ lib_libsst_la_SOURCES = \
   obj/src/sst/database/Key.cpp \
   obj/src/sst/database/Record.cpp \
   \
+  obj/src/sst/environment/namespace.cpp \
+  obj/src/sst/environment/Configuration.cpp \
+  obj/src/sst/environment/fix.cpp \
+  \
+  obj/src/sst/exception/namespace.cpp \
+  obj/src/sst/exception/Schema.cpp \
+  \
   obj/src/sst/generate/namespace.cpp \
   obj/src/sst/generate/key.fingerprint.cpp \
   obj/src/sst/generate/key.Pair.cpp \

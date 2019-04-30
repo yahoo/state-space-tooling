@@ -5,11 +5,16 @@ namespace sst::database {
   //
   // A Hyperledger Fabric database record made up of some parts
   //
+  // WATCHOUT - there are plenty of records in the Hyperledger Fabric World State Database (LevelDB)
+  // that do not look like this.  They are the meta-records describing the Fabric channels & participants.
+  // You must know to ignore them.  You ignore them by catching the exception.
+  //
   // Is RAII.
-  // if the key is malformed then a level::db2::exception::Aspect (descendant) is thrown.
-  // e.g. level::db2::Corruption
-  //      level::db2::Invariant
-  //      etc.
+  // if the record is malformed with respect ot PrivacyChain expecctations then an exception is thrown; e.g. exception::Schema
+  // Catch it with any of the relevant Aspects; 
+  //   level::db2::exception::Aspect
+  //   hyperledger::fabric::exception::Aspect
+  //   iab::privacychain::exception::Aspect
   //
   // Lifetime:
   //
@@ -31,10 +36,15 @@ namespace sst::database {
   //
   // Usage:
   //
-  //   auto it = level::db2::Iterator{...somehow...};
-  //   auto const &pair = *it;
-  //   auto record = Record{pair.second};
-  //   auto const payload = key.payload();
+  //   try {
+  //     auto it = level::db2::Iterator{...somehow...};
+  //     auto const &pair = *it;
+  //     auto record = Record{pair.second};
+  //     auto const payload = key.payload();
+  //     ...etc...
+  //   } catch (sst::exception::Dumping const &) {
+  //     ... this record was not "ours" (not a PrivacyChain database payload) ...
+  //   }
   //
   class Record;
 }
@@ -63,13 +73,13 @@ private:
 };
 #endiv
 #divert <ipp>
-#import level.db2.exception.Invariant
+#import sst.exception.Schema
 namespace sst::database {
   Record::Record(level::db2::Slice source)
     : outer{source}
     , end_header{MAGIC_EIGHT + outer.data()} {
     if (source.size() < MAGIC_EIGHT) {
-      throw level::db2::exception::Invariant{"record"};
+      throw exception::Schema{"record"};
     }
   }
 }
@@ -80,7 +90,7 @@ namespace sst::database {
   auto Record::version() const -> Version {
     auto inspected = iab::privacychain::schema::inspect(grossload());
     if (!ok(inspected)) {
-      throw level::db2::exception::Invariant{"record"};
+      throw exception::Schema{"record"};
     }
     return value(inspected);
   }
@@ -91,7 +101,7 @@ namespace sst::database {
   }
   template<std::size_t N> auto Record::payload() const -> View {
     if (0 == N || N >= outer.size() || end_header > outer.end() - N) {
-      throw level::db2::exception::Invariant{"record"};
+      throw exception::Schema{"record"};
     }
     // end_header+N <= end ... the true payload could be zero or more bytes
     return View{end_header+N, outer.end()};

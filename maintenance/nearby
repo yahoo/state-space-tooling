@@ -79,6 +79,7 @@ fi
 : ${with_module_uuid:=${with_scold_nearby?}/module-uuid}
 : ${with_temerarious_flagship:=${with_tunitas_nearby?}/temerarious-flagship}
 : ${with_tunitas_basics:=${with_tunitas_nearby?}/basics}
+: ${with_tunitas_butano:=${with_tunitas_nearby?}/butano}
 eval \
     ${prefix:+prefix=$prefix} \
     ${with_hypogeal_twilight:+with_hypogeal_twilight=$with_hypogeal_twilight} \
@@ -107,6 +108,7 @@ eval \
     ${with_module_sys:+--with-module-sys=$with_module_sys} \
     ${with_module_uuid:+--with-module-uuid=$with_module_uuid} \
     ${with_tunitas_basics:+--with-tunitas-basics=$with_tunitas_basics} \
+    ${with_tunitas_butano:+--with-tunitas-butano=$with_tunitas_butano} \
     ${with_temerarious_flagship:+--with-temerarious-flagship=$with_temerarious_flagship} \
     ${with_std_hyperledger_fabric:+--with-std-hyperledger-fabric=$with_std_hyperledger_fabric} \
     ${with_std_iab_privacychain:+--with-std-iab-privacychain=$with_std_iab_privacychain} \

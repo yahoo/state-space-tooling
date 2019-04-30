@@ -17,12 +17,6 @@ namespace app::tooling {
   auto usage(Configuration const &, std::ostream &, sys::exits::Code) -> sys::exits::Code;
   auto version(Configuration const &, std::ostream &) -> sys::exits::Code;
   auto invalid(Configuration const &, unsigned, Argv const &) -> sys::exits::Code;
-  auto fixenv(Configuration const &) -> void;
-  namespace env {
-    auto fixPATH(Configuration const &) -> void;
-    enum Override { DEFAULT, OVERRIDE };
-    auto setMSP(Configuration const &, std::string value, Override) -> void;
-  }
   namespace detail {
     // Throws if the argv is not exactly the count.
     // This signals is the programmer's error (your error) because the length was to have been checked prior.
@@ -54,10 +48,12 @@ auto main(int cc, char *vv[]) -> int {
 #import std.string
 #import std.string_literals
 #import sys.exits.constants
+#import sst.environment.fix
 using namespace std::string_literals;
 auto app::tooling::main(c::argv av) -> sys::exits::Code try {
+  namespace fix = sst::environment::fix;
   Configuration cfg{Configuration::Program{av.front()}};
-  fixenv(cfg);
+  fix::fixenv(cfg);
   auto ecode = sys::exits::OK;
   auto vv = c::rest(av);
   for ( ; vv.size(); vv=c::rest(vv)) {
@@ -68,6 +64,8 @@ auto app::tooling::main(c::argv av) -> sys::exits::Code try {
     if (false) {
     } else if ("--"s == option) {
       vv = c::rest(vv);
+      break;
+    } else if ('-' != option.front()) {
       break;
     } else if ("--usage"s == option || "--help"s == option || "-h"s == option) {
       return usage(cfg, std::cout, sys::exits::OK);
@@ -118,21 +116,21 @@ auto app::tooling::main(c::argv av) -> sys::exits::Code try {
       cfg.context.peers.endpoints = value(es);
       verbose(cfg) << "peers endpoints " << format(cfg.context.peers.endpoints) << '\n';
     } else if ("--msp"s == option) {
-      // --msp is our invention; Hyperledger Fabric v1.4 requires the use of the CORE_PEER_MSPCONFIGPATH ENVIRONMENT variable
+      // --msp is our invention; Hyperledger Fabric v1.4 requires the use of the CORE_PEER_MSPCONFIGPATH environment variable
       if (vv.size() < 2) {
         error(cfg) << option << " requires a value following it\n";
         break;
       }
       vv = c::rest(vv);
       auto msppath = vv.front();
-      env::setMSP(cfg, msppath, env::Override::OVERRIDE);
+      setMSP(cfg, msppath, fix::Override::OVERRIDE);
       verbose(cfg) << "msp " << msppath << '\n';
     } else {
-      if ('-' == option.front() && std::string::npos != option.find('=')) {
+      if (std::string::npos != option.find('=')) {
         notice(cfg) << "the PrivacyChain and Hyperledger Fabric options do not use '=' in options\n";
         notice(cfg) << "probably you need to use a space and the value in the subsequent argument\n";
       }
-      error(cfg) << "unknown option " << option << '\n';
+      error(cfg) << "unknown option " << /*format::q*/ option << '\n';
       return sys::exits::CONFIG;
     }
   }
@@ -141,15 +139,15 @@ auto app::tooling::main(c::argv av) -> sys::exits::Code try {
     ecode &= sys::exits::FAIL;
   }
   if (cfg.context.channelID.empty()) {
-    error(cfg) << "there is no channelID, perhaps --channelID is missing?\n";
+    error(cfg) << "there is no channelID, perhaps --channel NAME is missing?\n";
     ecode &= sys::exits::FAIL;
   }
   if (cfg.context.name.empty()) {
-    error(cfg) << "there is no chaincode name, perhaps --name is missing?\n";
+    error(cfg) << "there is no chaincode name, perhaps --chaincode NAME is missing?\n";
     ecode &= sys::exits::FAIL;
   }
   if (cfg.context.peers.endpoints.empty()) {
-    warning(cfg) << "there are no peers to contact, perhaps --peersAddresses is missing?\n";
+    warning(cfg) << "there are no peers to contact, perhaps --peers ENDPOINTS is missing?\n";
     // ecode &= sys::exits::FAIL;
   }
   if (!ok(ecode)) {
@@ -170,7 +168,6 @@ auto app::tooling::main(c::argv av) -> sys::exits::Code try {
       return invalid(cfg, HOWMANY ,vv);
     }
   } else if ("history"s == vv.front()) {
-    
     auto const HOWMANY = 2u;
     if (HOWMANY == vv.size()) {
       return history(cfg, c::rest(vv));
@@ -224,7 +221,10 @@ auto app::tooling::get(Configuration &cfg, Argv vv) -> sys::exits::Code {
                                        [&out](record::Json const &object) {
                                          out << "JSON " << object;
                                        },
-                                       [&out](record::tcf::V1 const &) { out << "TCF.v1"; },
+                                       [&out](record::tcf::Version1 const &) {
+#warning FIXTHIS ... do something fun with record::tcf::Version1
+                                         out << "TCF.v1";
+                                       },
                                        [&out](auto const &)  { out << "unknown record type"; }};
   std::visit(visitor, value(got));
   return sys::exits::OK;
@@ -287,7 +287,7 @@ auto app::tooling::history(Configuration &cfg, Argv vv) -> sys::exits::Code {
   }
   auto &out{std::cout};
   for (auto const &rec : value(got)) {
-#warning WRITETHIS out << format(tx) << '\n';
+#warning WRITETHIS history transaction out << format(tx) << '\n';
     out << "transaction -- TODO write format(tx)\n";
   }
   return sys::exits::OK;
@@ -297,6 +297,7 @@ auto app::tooling::unknown(Configuration const &cfg, std::string const &cmd) -> 
   return sys::exits::CONFIG;
 }
 auto app::tooling::usage(Configuration const &cfg, std::ostream &out, sys::exits::Code code) -> sys::exits::Code {
+  auto const default_admin_msp = "/etc/hyperledger/fabric/admin/msp"sv;  // [[FIXTHIS]] put well-known constants like this in namspace defaults
   out << "usage: " << cfg.NAME
       << (" [...options...] command ...arguments...\n"
           "\n"
@@ -306,8 +307,8 @@ auto app::tooling::usage(Configuration const &cfg, std::ostream &out, sys::exits
           "  --peers=<endpoints>                   a comma-separated list of peer endpoints\n"
           "                                        <endpoint> is a FQDN or FQDN:PORT or the address variant of such\n"
           "  --msp=.../admin/msp                   path to the MSP certificate directory\n"
-          "                                        default: /etc/hyperledger/fabric/admin/msp\n" // [[FIXTHIS]]  constants like this in namspace defaults
-          "\n"
+          "                                        default: ") << default_admin_msp << '\n'
+      << ("\n"
           "General Options:\n"
           "  --usage, --help                       show this message\n"
           "  --version                             exhibit the version and quit\n"
@@ -317,7 +318,7 @@ auto app::tooling::usage(Configuration const &cfg, std::ostream &out, sys::exits
           "  --dryrun, --dry-run                   dry run, do not do anything\n"
           "  --debug                               debug mode (you should not need this)\n"
           "\n"
-          "Commands\n"
+          "(Sub-)Commands\n"
           "  get KEY\n"
           "  set KEY VALUE\n"
           "  history KEY\n")
@@ -332,39 +333,5 @@ auto app::tooling::version(Configuration const &cfg, std::ostream &out) -> sys::
 auto app::tooling::invalid(Configuration const &cfg, unsigned count, Argv const &vv) -> sys::exits::Code {
   error(cfg) << "inappropriate number of arguments for " << vv.front() << ", expected " << count << " but found " << vv.size() << '\n';
   return sys::exits::CONFIG;
-}
-auto app::tooling::fixenv(Configuration const &cfg) -> void {
-  env::fixPATH(cfg);
-  env::setMSP(cfg, "/etc/hyperledger/fabric/admin/msp"s, env::Override::DEFAULT);
-}
-#import sys.posix.getenv
-#import sys.posix.setenv
-auto app::tooling::env::fixPATH(Configuration const &cfg) -> void {
-  auto path = []() -> std::string {
-                auto got = sys::posix::getenv<std::string>("PATH");
-                return !ok(got) ? ""s : value(std::move(got));
-              }();
-  // FIXTHIS ... be smarter about this ... only do this if it is *necessary*; and warn about it.
-  path += ":/opt/hyperledger/fabric/bin:/opt/iab/privacychain/bin";
-  auto varname = "PATH"s;
-  auto set = sys::posix::setenv(varname, path);
-  if (!ok(set)) {
-    // Just warn ... it should never happen and also we can continue on.
-    // Also PATH may be just fine already.
-    warning(cfg) << "could not modify " << varname << " to incorporate IAB PrivacyChain and Hyperledger Fabric because " << error_code(set).message() << '\n';
-  }
-}
-auto app::tooling::env::setMSP(Configuration const &cfg, std::string value, Override override) -> void {
-  auto varname = "CORE_PEER_MSPCONFIGPATH"s;
-  if (!ok(sys::posix::getenv<std::string>(varname))) {
-    // Respect what was there before, but there is nothing then set a good default.
-    auto force = override == Override::OVERRIDE;
-    auto set = sys::posix::setenv(varname, value, force);
-    if (!ok(set)) {
-      // Just warn ... it should never happen and also we can continue on.
-      // Also PATH may be just fine already.
-      warning(cfg) << "could not set " << varname << " to " << value << " because " << error_code(set).message() << '\n';
-    }
-  }
 }
 #endiv

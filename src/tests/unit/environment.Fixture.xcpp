@@ -1,0 +1,46 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace tests::unit::environment { class Fixture; }
+#endiv
+#divert <hpp>
+#import cppunit.Test
+#import cppunit.test.Fixture
+class tests::unit::environment::Fixture : public cppunit::test::Fixture {
+public:
+  auto test_Configuration() -> void;
+  auto test_fixenv() -> void;
+  static auto suite() -> cppunit::Test *;
+};
+#endiv
+#divert <cpp>
+#import sst.environment.Configuration
+auto tests::unit::environment::Fixture::test_Configuration() -> void {
+  using ::options::Program;
+  using ::sst::environment::Configuration;
+  Configuration cfg{Program{"a.out"}};
+  debug(cfg) << "debug this!\n";
+  verbose(cfg) << "lugubrious in its limning of the intensional emanence!\n";
+  notice(cfg) << "the Surgeon General has determined that the State of California causes cancer!\n";
+  warning(cfg) << "you should not do that!\n";
+  error(cfg) << "bad!\n";
+}
+#import sst.environment.fix
+auto tests::unit::environment::Fixture::test_fixenv() -> void {
+  using ::options::Program;
+  using ::sst::environment::Configuration;
+  Configuration cfg{Program{"a.out"}};
+  fixenv(cfg);
+}
+#import unit.rigging.suite.Stream
+#import unit.rigging.suite.call
+#import unit.rigging.suite.add
+auto tests::unit::environment::Fixture::suite() -> cppunit::Test * {
+  using namespace ::unit::rigging::suite;
+  Stream series("environment");
+  series << call("Configuration", &Fixture::test_Configuration)
+         << call("fixenv", &Fixture::test_fixenv)
+    ;
+  return series.release();
+}
+#endiv

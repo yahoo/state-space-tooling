@@ -2,6 +2,7 @@
 // Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
 #divert <cpp>
 #import tests.unit.database.Fixture
+#import tests.unit.environment.Fixture
 #import tests.unit.generate.Fixture
 #import tests.unit.key.Fixture
 #import tests.unit.sst.Fixture
@@ -10,6 +11,7 @@
 auto main(int argc, char *argv[]) -> int {
   namespace tu = tests::unit;
   rigging::bench::Main remain(tu::database::Fixture::suite(),
+                              tu::environment::Fixture::suite(),
                               tu::generate::Fixture::suite(),
                               tu::key::Fixture::suite(),
                               tu::sst::Fixture::suite(),

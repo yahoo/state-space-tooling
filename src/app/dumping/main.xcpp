@@ -121,6 +121,7 @@ auto app::dumping::unknown(Configuration const &cfg, std::string const &cmd) -> 
 #import sst.database.Key
 #import sst.database.Record
 #import level.db2.as
+#import level.db2.exception.Aspect
 auto app::dumping::dump(Configuration const &cfg, std::ostream &outbound, std::filesystem::path const &cli_indicated_location) -> sys::exits::Code {
   sst::database::Location location{cli_indicated_location};
   if (!location.probe()) {
@@ -140,10 +141,19 @@ auto app::dumping::dump(Configuration const &cfg, std::ostream &outbound, std::f
       outbound << "K:" << format(pair.first) << '\n'
                << "V:" << format(pair.second) << '\n';
     } else {
-      sst::database::Key key{pair.first};
-      sst::database::Record record{pair.second};
-      outbound << "K:" << format(key.subkey()) << '\n'
-               << "V:" << format(record.payload()) << '\n';
+      try {
+          auto metakey = sst::database::Key{pair.first};
+          auto record = sst::database::Record{pair.second};
+          // set up all this first, before printing anything (in case of exceptions)
+          auto const key = metakey.subkey();
+          auto const payload = record.payload();
+          // not expecting exceptions beyond this point...
+          outbound << "K:" << format(key) << '\n'
+                   << "V:" << format(payload) << '\n';
+      } catch (level::db2::exception::Aspect const &) {
+        // these are not errors, rather they are meta-records of Hyperledger Fabric
+        debug(cfg) << "skipping ...\n";
+      }
     }
   }
   return sys::exits::OK;

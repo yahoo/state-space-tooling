@@ -10,7 +10,7 @@ tests_unit_TESTS = \
   tests/unit/all.test \
   $(end)
 
-tests_usage_TESTS_DECLARED = $(tests_usage_TESTS)
-tests_usage_TESTS_OBSERVED = $(wildcard tests/usage/*.test)
-tests_usage_TESTS_ORPHANED = $(filter-out $(tests_usage_TESTS_DECLARED), $(tests_usage_TESTS_OBSERVED))
-$(if $(tests_usage_TESTS_ORPHANED), $(error orphaned tests $(tests_usage_TESTS_ORPHANED)))
+tests_unit_TESTS_DECLARED = $(tests_unit_TESTS)
+tests_unit_TESTS_OBSERVED = $(wildcard tests/unit/*.test)
+tests_unit_TESTS_ORPHANED = $(filter-out $(tests_unit_TESTS_DECLARED), $(tests_unit_TESTS_OBSERVED))
+$(if $(tests_unit_TESTS_ORPHANED), $(error orphaned tests $(tests_unit_TESTS_ORPHANED)))

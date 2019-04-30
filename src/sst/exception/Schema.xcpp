@@ -1,0 +1,57 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::exception {
+  //
+  // When traversing the database with sst::database::State (dumping it)
+  // There was some problem.
+  // These are "exceptional" problems in the sense that meta-records are rare in the overall corpus.
+  //
+  // Usage:
+  //
+  //   sst::database::State state{location};
+  //   for (auto const &pair : state.range()) {
+  //     try {
+  //        auto key = Key{pair.first};
+  //        auto record = Record{pair.second};
+  //        ... use key & record...
+  //     } catch (Schema const &) {
+  //        ... ignore these, they are Hyperledger Fabric talking ot itself...
+  //     }
+  //   }
+  //
+  class Schema;
+}
+#endiv
+#divert <hpp>
+#import iab.privacychain.exception.Aspect
+#import hyperledger.fabric.exception.Aspect
+#import level.db2.exception.Aspect
+#import std.runtime_error
+#import std.string
+class sst::exception::Schema
+  : public iab::privacychain::exception::Aspect
+  , public hyperledger::fabric::exception::Aspect
+  , public level::db2::exception::Aspect
+  , public std::runtime_error {
+  struct ancestors {
+    using PrivacyChain = iab::privacychain::exception::Aspect;
+    using Fabric = hyperledger::fabric::exception::Aspect;
+    using Level = level::db2::exception::Aspect;
+    using Exception = std::runtime_error;
+  };
+public:
+  inline explicit Schema(std::string const &reason);
+  auto what() const noexcept -> char const * final;
+};
+#endiv
+#divert <ipp>
+sst::exception::Schema::Schema(std::string const &reason)
+  : ancestors::Exception{reason}
+{ }
+#endiv
+#divert <cpp>
+auto sst::exception::Schema::what() const noexcept -> char const * {
+  return ancestors::Exception::what();
+}
+#endiv

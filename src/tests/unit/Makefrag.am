@@ -15,6 +15,7 @@ check_bin_unit_SOURCES = \
   obj/src/tests/unit/main.cpp \
   obj/src/tests/unit/namespace.cpp \
   obj/src/tests/unit/database.Fixture.cpp \
+  obj/src/tests/unit/environment.Fixture.cpp \
   obj/src/tests/unit/generate.Fixture.cpp \
   obj/src/tests/unit/key.Fixture.cpp \
   obj/src/tests/unit/key.Identifier.cpp \

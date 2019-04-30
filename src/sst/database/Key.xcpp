@@ -5,11 +5,16 @@ namespace sst::database {
   //
   // A Hyperledger Fabric database key is made up of three parts
   //
+  // WATCHOUT - there are plenty of records in the Hyperledger Fabric World State Database (LevelDB)
+  // that do not look like this.  They are the meta-records describing the Fabric channels & participants.
+  // You must know to ignore them.  You ignore them by catching the exception.
+  //
   // Is RAII.
-  // if the key is malformed then a level::db2::exception::Aspect (descendant) is thrown.
-  // e.g. level::db2::Corruption
-  //      level::db2::Invariant
-  //      etc.
+  // if the key is malformed with respect ot PrivacyChain expecctations then an exception is thrown; e.g. exception::Schema
+  // Catch it with any of the relevant Aspects; 
+  //   level::db2::exception::Aspect
+  //   hyperledger::fabric::exception::Aspect
+  //   iab::privacychain::exception::Aspect
   //
   // Lifetime
   //
@@ -32,12 +37,19 @@ namespace sst::database {
   //
   // Usage:
   //
-  //   auto it = level::db2::Iterator{...somehow...};
-  //   auto const &pair = *it;
-  //   auto key = Key{pair.first};
-  //   auto const channel = key.channel();
-  //   auto const chaincode = key.chaincode();
-  //   auto const subkey = key.subkey();
+  //   try {
+  //     auto it = level::db2::Iterator{...somehow...};
+  //     auto const &pair = *it;
+  //     auto key = Key{pair.first};
+  //     auto const channel = key.channel();
+  //     auto const chaincode = key.chaincode();
+  //     auto const subkey = key.subkey();
+  //     ...etc...
+  //   } catch (sst::exception::Dumping const &) {
+  //     ...this key was not "ours" (not a PrivacyChain databse key)
+  //   } catch (iab::privacychain::exception::Aspect const &) {
+  //     ...more generally...
+  //   }
   //
   class Key;
 }
@@ -71,7 +83,7 @@ namespace sst::database {
   auto Key::chaincode() const -> View { return View{1+end_channel, end_chaincode}; }
   auto Key::subkey() const -> View    { return View{1+end_chaincode, outer.end()}; }
 }
-#import level.db2.exception.Invariant
+#import sst.exception.Schema
 namespace sst::database {
   auto Key::find(Octet const *start, Octet const *limit) -> Octet const * {
     for (auto finish{start}; finish < limit; ++finish) {
@@ -79,7 +91,7 @@ namespace sst::database {
         return finish;
       }
     }
-    throw level::db2::exception::Invariant{"key"};
+    throw exception::Schema{"key"};
   }
 }
 #endiv

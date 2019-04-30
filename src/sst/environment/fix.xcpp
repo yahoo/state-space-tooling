@@ -1,0 +1,68 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <hpp>
+#import sst.environment.Configuration
+#import std.string
+#import std.string_literals;
+namespace sst::environment {
+  //
+  // Because Hyperledger Fabric takes actual configurations from the environment variables
+  // ... fix the environment, based on values that we acquired from elsewhere with that elsewhere
+  // being something "reasonable" like some configuration files or the command line itself.
+  //
+  // This is aspect of the API is part of the TXUI.
+  // It expects to spew warnings and errors onto the console for the operator to understand.
+  //
+  // Usage:
+  //
+  //   Configuration cfg{...somehow...};
+  //   fixenv(cfg);
+  // 
+  namespace fix {
+    using namespace std::literals;
+    auto fixenv(Configuration const &) -> void;
+    auto addPATH(Configuration const &) -> void;
+    enum Override { DEFAULT, OVERRIDE };
+    auto setMSP(Configuration const &, std::string value, Override) -> void;
+  }
+  using fix::fixenv;
+}
+#endiv
+#divert <cpp>
+auto sst::environment::fix::fixenv(Configuration const &cfg) -> void {
+  addPATH(cfg);
+  setMSP(cfg, "/etc/hyperledger/fabric/admin/msp"s, Override::DEFAULT);
+}
+#import options.logging // warning(cfg) ... etc.
+#import std.move
+#import sys.posix.getenv
+#import sys.posix.setenv
+auto sst::environment::fix::addPATH(Configuration const &cfg) -> void {
+  auto path = []() -> std::string {
+                auto got = sys::posix::getenv<std::string>("PATH");
+                return !ok(got) ? ""s : value(std::move(got));
+              }();
+  // FIXTHIS ... be smarter about this ... only do this if it is *necessary*; and warn about it.
+  path += ":/opt/hyperledger/fabric/bin:/opt/iab/privacychain/bin";
+  auto varname = "PATH"s;
+  auto set = sys::posix::setenv(varname, path);
+  if (!ok(set)) {
+    // Just warn ... it should never happen and also we can continue on.
+    // Also PATH may be just fine already.
+    warning(cfg) << "could not modify " << varname << " to incorporate IAB PrivacyChain and Hyperledger Fabric because " << error_code(set).message() << '\n';
+  }
+}
+auto sst::environment::fix::setMSP(Configuration const &cfg, std::string value, Override override) -> void {
+  auto varname = "CORE_PEER_MSPCONFIGPATH"s;
+  if (!ok(sys::posix::getenv<std::string>(varname))) {
+    // Respect what was there before, but there is nothing then set a good default.
+    auto force = override == Override::OVERRIDE;
+    auto set = sys::posix::setenv(varname, value, force);
+    if (!ok(set)) {
+      // Just warn ... it should never happen and also we can continue on.
+      // Also PATH may be just fine already.
+      warning(cfg) << "could not set " << varname << " to " << value << " because " << error_code(set).message() << '\n';
+    }
+  }
+}
+#endiv

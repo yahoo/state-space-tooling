@@ -1,0 +1,58 @@
+// This is -*- c++ -*- nearly C++2a with Modules TS but in the S.C.O.L.D. stylings that are so popular these days.
+// Copyright (c) 2019 Verizon Media, Inc.  See the LICENSE statement nearby.
+#divert <fpp>
+namespace sst::environment {
+  //
+  // A peer-contacting program's configuration.
+  // The program's configuration participates in options processing and txui messaging (error, warning, notice, verbose, debug)
+  //
+  // The generalized options suite of a peer-contacting 
+  //
+  // Hyperledger (Fabric) Options:
+  //   --channel=<name>                      a channel name
+  //   --chaincode=<name>                    a chaincode name
+  //   --peers=<endpoints>                   a comma-separated list of peer endpoints
+  //                                         <endpoint> is a FQDN or FQDN:PORT or the address variant of such
+  //   --msp=.../admin/msp                   path to the MSP certificate directory
+  //                                         default: /etc/hyperledger/fabric/admin/msp // [[FIXTHIS]]  constants like this in namspace defaults
+  // 
+  // General Options:
+  //   --usage, --help                       show this message
+  //   --version                             exhibit the version and quit
+  //   --warnings, --warning                 warnings mode
+  //   --quiet                               Shut. Up.  is independent of --verbose
+  //   --verbose                             verbose mode
+  //   --dryrun, --dry-run                   dry run, do not do anything
+  //   --debug                               debug mode (you should not need this)
+  //
+  // Usage:
+  //
+  //   Configuration = cfg{program};
+  //   cfg.verbose_mode = true;
+  //   cfg.warning_mode = true;
+  //   error(cfg) << "that was bad";
+  //   warning(cfg) << "you shouldn't do that";
+  //   ...etc...
+  //
+  class Configuration;
+}
+#endiv
+#divert <hpp>
+#import options.Program // module-options-devel >= 0.16.0 or later use cli::options::Program or such
+#import options.config.Generic // module-options-devel >= 0.16.0 or later use cli::configuration::Generic or such
+#import hyperledger.fabric.peer.chaincode.Call
+class sst::environment::Configuration : public options::config::Generic {
+  using ancestor = options::config::Generic;
+public:
+  using Program = ::options::Program;
+  inline explicit Configuration(Program);
+  using Context = hyperledger::fabric::peer::chaincode::Call;
+  Context context;
+};
+#import options.logging // provides error(cfg), warning(cfg) ...etc...
+#endiv
+#divert <ipp>
+sst::environment::Configuration::Configuration(Program program)
+  : ancestor{program}
+{ }
+#endiv

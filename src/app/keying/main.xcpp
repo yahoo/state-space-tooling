@@ -3,8 +3,12 @@
 #divert <hpp>
 #import c.argv
 #import sys.exits.Code
+#import std.ostream
 namespace app::keying {
+  extern std::string NAME;
   auto main(c::argv) -> sys::exits::Code;
+  auto usage(std::ostream &, sys::exits::Code) -> sys::exits::Code;
+  auto version(std::ostream &) -> sys::exits::Code;
 }
 #endiv
 #divert <cpp>
@@ -16,27 +20,55 @@ auto main(int cc, char *vv[]) -> int {
 #import std.cerr
 #import sys.exits.constants
 #import rabinpoly.fingerprint
+std::string app::keying::NAME{"pck"};
 auto app::keying::main(c::argv av) -> sys::exits::Code try {
   auto NAME = av.front();
   auto verbose_mode = false;
-  auto warnings_count = false;
+  auto warnings_seen = false;
   for (std::string word : c::rest(av)) {
     if (word.empty()) {
-      std::cerr << NAME << ": warning, empty identifier is ignored (you cannot have an identifier like that)\n";
+      std::cerr << NAME << ": warning, empty an identifier is ignored (you cannot have an identifier like that)\n";
+      warnings_seen = true;
+    } else if ("--usage"s == word || "--help"s == word || "-h"s == word) {
+      return usage(std::cout, sys::exits::OK);
+    } else if ("--version"s == word || "-V" == word) {
+      return version(std::cout);
     } else if ('-' == word.front()) {
-      std::cerr << NAME << ": warning, there are no options (nominate identifiers with --)\n";
-      warnings_count = true;
+      std::cerr << NAME << ": warning, there are no other options (use '--usage' to see the options)\n";
+      warnings_seen = true;
     } else {
       std::cout << format(rabinpoly::fingerprint(word)) << '\n';
     }
   }
   if (verbose_mode) {
-    if (warnings_count) {
+    if (warnings_seen) {
       std::cerr << NAME << ": info, there were warnings\n";
     }
   }
   return sys::exits::OK;
 } catch (...) {
   return sys::exits::SOFTWARE;
+}
+auto app::keying::usage(std::ostream &outbound, sys::exits::Code code) -> sys::exits::Code {
+  outbound << "usage: " << NAME << " [...options...] [--] primary-identifier ...\n"
+           << ("\n"
+               "the output is a 'database key' (a RabinPoly fingerprint)\n"
+               "\n"
+               "General Options:\n"
+               "  --usage, --help                       show this message\n"
+               "  --version                             exhibit the version and quit\n"
+               "  --                                    separate the options from the primary-identifier\n"
+               "\n"
+               "Examples:\n")
+           << "  " << NAME << " yourname+privacychain@yourhost.example.org\n"
+           << "  " << NAME << " e797f222552e4c089ee1a5627eea4729a2dcda38ca1148de96e8e1ace3af5804\n"
+           << "  " << NAME << " -- --apple-- --banana-- --cherry-- --dog-- --eagle-- --frog-- --goat--\n"
+    ;
+  return sys::exits::OK;
+}
+#include "config.h" // PACKAGE_VERSION as a #define (yuk!)
+auto app::keying::version(std::ostream &outbound) -> sys::exits::Code {
+  outbound << NAME << ": version " << PACKAGE_VERSION << '\n';
+  return sys::exits::OK;
 }
 #endiv

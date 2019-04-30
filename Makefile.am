@@ -33,6 +33,7 @@ DEVELOPMENT_AREAS = \
   $(module_sys_prefix) \
   $(module_uuid_prefix) \
   $(tunitas_basics_prefix) \
+  $(tunitas_butano_prefix) \
   $(hyperledger_fabric_sdk_prefix) \
   $(iab_privacychain_sdk_prefix) \
   $(end)

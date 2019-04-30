@@ -3,3 +3,10 @@
 #divert <fpp>
 namespace app::keying { }
 #endiv
+#divert <hpp>
+#import std.string_literals
+#import std.string_view_literals
+namespace app::keying {
+  using namespace std::literals;
+}
+#endiv

@@ -16,15 +16,12 @@ namespace app::tooling {
 }
 #endiv
 #divert <hpp>
-#import options.Program // module-options-devel >= 0.16.0 or later use cli::options::Program or such
-#import options.config.Generic // module-options-devel >= 0.16.0 or later use cli::configuration::Generic or such
-#import hyperledger.fabric.peer.chaincode.Call
-class app::tooling::Configuration : public options::config::Generic {
-  using ancestor = options::config::Generic;
+#import sst.environment.Configuration
+class app::tooling::Configuration : public sst::environment::Configuration {
+  using ancestor = sst::environment::Configuration;
 public:
-  using Program = ::options::Program;
   inline explicit Configuration(Program);
-  hyperledger::fabric::peer::chaincode::Call context;
+  // no new fields (at this time)
 };
 #endiv
 #divert <ipp>
@@ -32,4 +29,3 @@ app::tooling::Configuration::Configuration(Program program)
   : ancestor{program}
 { }
 #endiv
-
