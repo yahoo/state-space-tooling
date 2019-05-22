@@ -9,7 +9,7 @@ The main body of documentation for the State Space reference implementation of t
 
 More detailed information can be found at the following locations
 about the scope and purpose of the State Space implementation of the IAB PrivacyChain Reference Design.
-* [State Space](https://github.com/yahoo/statespace)
+* [State Space](https://github.com/yahoo/state-space-packaging)
 * [IAB PrivacyChain](https://github.com/InteractiveAdvertisingBureau/PrivacyChain/blob/master/README.md) Reference Design.
 
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
@@ -42,10 +42,11 @@ The [configuration](#configuration) step will check for many but not all require
 
 Generally, the dependencies are among:
 - The Hyperledger Fabric database and its Public Key Infrastructure (PKI) services.
+- Various components of the Tunitas system; <em>e.g.</em> the [Basic Components](https://github.com/yahoo/tunitas-basic).
 - A modern (C++2a) development environment.
 - A recent Fedora, but any recent Linux distro should suffice.
 
-The State Space was developed on Fedora 27 through Fedora 30 using GCC 7 and GCC 8 with `-fconcepts` and at least `-std=c++1z`.  More details on the development environment and the build system can be found in [temerarious-flagship](https://github.com/yahoo/temerarious-flagship/blob/master/README.md).
+The State Space project was developed on Fedora 27 through Fedora 30 using GCC 7 and GCC 8 with `-fconcepts` and at least `-std=c++1z`.  More details on the development environment and the build system can be found in [temerarious-flagship](https://github.com/yahoo/temerarious-flagship/blob/master/README.md).
 
 ## Installation
 

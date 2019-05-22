@@ -1,6 +1,6 @@
 # Required Packages
 
-This document contains an estimate of the tools, components their versions which you will need to build this repository.  More details be found upstream the documentation for the lead repository, the [State Space Packaging](https://github.com/yahoo/state-space-packaging/blob/master/PACKAGES.md) as well as the [Temerarious Flagship Build System](https://github.com/yahoo/temerarious-flagship/blob/master/README.md).  The mentions in this document pertain only to this repository, the _State Space Tooling_.
+This document contains an estimate of the tools, components their versions which you will need to build this repository.  More details can be found upstream the documentation for the lead repository, the [State Space Packaging](https://github.com/yahoo/state-space-packaging/blob/master/PACKAGES.md) as well as the [Temerarious Flagship Build System](https://github.com/yahoo/temerarious-flagship/blob/master/README.md).  The mentions in this document pertain only to this repository, the _State Space Tooling_.
 
 ## State Space
 
@@ -49,7 +49,7 @@ This is a C++ project.  The project approaches the upcoming C++20 standard, wher
 ** `automake` >= 1.16
 ** `autoconf` >= 2.69
 ** `libtool` >= 2.4
-** `make` >- 4.2
+** `make` >= 4.2
 * The Tunitas Build System
 ** [temerarious-flagship](https://github.com/yahoo/temerarious-flagship) >= 1.0.0, some build system components
 * The [S.C.O.L.D.](https://www.scold-lang.org) [toolchain](https://git.scold-lang.org/core) and modules
@@ -61,7 +61,7 @@ This is a C++ project.  The project approaches the upcoming C++20 standard, wher
 
 ##  Components
 
-This section enumerates is a best-estimate abstraction of the component dependencies for [Hyperledger Fabric SDK C++](https://github.com/yahoo/hyperoledger-fabric-sdk-c++).  A master list of dependencies for the State Space reference implementation of the IAB PrivacyChain Technology Specification is with the [packaging](https://github.com/yahoo/state-space-packaging/blob/master/PACKAGES.md).
+This section enumerates is a best-estimate abstraction of the component dependencies for [State Space Tooling](https://github.com/yahoo/state-space-tooling).  A master list of dependencies for the State Space reference implementation of the IAB PrivacyChain Technology Specification is with the [packaging](https://github.com/yahoo/state-space-packaging/blob/master/PACKAGES.md).
 
 These packages are available via `dnf` or `yum`, if your machine is configured appropriately.
 
