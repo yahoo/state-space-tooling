@@ -46,18 +46,18 @@ This is a C++ project.  The project approaches the upcoming C++20 standard, wher
 
 ### Build Support
 * The [GNU Autotools](https://www.gnu.org/software/automake/manual/html_node/index.html#Top)
-** `automake` >= 1.16
-** `autoconf` >= 2.69
-** `libtool` >= 2.4
-** `make` >= 4.2
+    * `automake` >= 1.16
+    * `autoconf` >= 2.69
+    * `libtool` >= 2.4
+    * `make` >= 4.2
 * The Tunitas Build System
-** [temerarious-flagship](https://github.com/yahoo/temerarious-flagship) >= 1.0.0, some build system components
+    * [temerarious-flagship](https://github.com/yahoo/temerarious-flagship) >= 1.0.0, some build system components
 * The [S.C.O.L.D.](https://www.scold-lang.org) [toolchain](https://git.scold-lang.org/core) and modules
-** [hypogeal-twilight](https://git.scold-lang.org/core/hypogeal-twilight) >= 0.43, fundamental build system components.
-** [incendiary-sophist](https://git.scold-lang.org/core/incendiary-sophist) >= 0.1, the test harness, is optional.
-** [anguish-answer](https://git.scold-lang.org/core/anguish-answer) >= 0.1, the preprocessor towards a [unitary build](https://mesonbuild.com/Unity-builds.html).
+    * [hypogeal-twilight](https://git.scold-lang.org/core/hypogeal-twilight) >= 0.43, fundamental build system components.
+    * [incendiary-sophist](https://git.scold-lang.org/core/incendiary-sophist) >= 0.1, the test harness, is optional.
+    * [anguish-answer](https://git.scold-lang.org/core/anguish-answer) >= 0.1, the preprocessor towards a [unitary build](https://mesonbuild.com/Unity-builds.html).
 * `perl` prefer `perl` >= 5.28
-** and various perl modules, surely.
+    * and various perl modules, surely.
 
 ##  Components
 
@@ -84,19 +84,19 @@ A recent Ubuntu should be fine.
 ## Availabilities
 
 * [Fedora](https://getfedora.com)
-** Fedora 27, possible.
-** Fedora 28, available.
-** Fedora 29, current.
-** Fedora 30, current.
+    * Fedora 27, possible.
+    * Fedora 28, available.
+    * Fedora 29, current.
+    * Fedora 30, current.
 * Hyperledger Fabric
-** <em>Release 01 (Heavy Fish)</em> use Docker (Hyperledger Fabric v1.1) supported Privacy Chain v1.0 <em>Release 01 (Worthy Cupboard)</em>
-** <em>Release 02 (Giddy Llama)</em> unavailable (Hyperledger Fabric v1.2)
-** <em>Release 03 (Furious Eagle)</em> unavailable (Hyperledger Fabric v1.3)
-** <em>Release 04 (Bitter Vole)</em> contains <em>e.g.</em> `hyperledger-fabric-cluster-1.4.0-4.vzmf04.fc27.src.rpm`
+    * <em>Release 01 (Heavy Fish)</em> use Docker (Hyperledger Fabric v1.1) supported Privacy Chain v1.0 <em>Release 01 (Worthy Cupboard)</em>
+    * <em>Release 02 (Giddy Llama)</em> unavailable (Hyperledger Fabric v1.2)
+    * <em>Release 03 (Furious Eagle)</em> unavailable (Hyperledger Fabric v1.3)
+    * <em>Release 04 (Bitter Vole)</em> contains <em>e.g.</em> `hyperledger-fabric-cluster-1.4.0-4.vzmf04.fc27.src.rpm`
 * [Tunitas](https://github.com/yahoo/tunitas-packaging/blob/master/README.md)
-** <em>Release 01 (Famous Oak)</em>, current.
-** <em>Release 02 (Towering Redwood)</em>, forthcoming, date TBD.
+    * <em>Release 01 (Famous Oak)</em>, current.
+    * <em>Release 02 (Towering Redwood)</em>, forthcoming, date TBD.
 * [S.C.O.L.D. C++](https://www.scold-lang.org) (Scalable Object Location Disaggregation)
-** <em>Release 02 (Maroon Iron Crow)</em>, possible.
-** <em>Release 03 (Red Mercury Goose)</em>, current
-** <em>Release 04 (Green Copper Heron)</em>, preferred.
+    * <em>Release 02 (Maroon Iron Crow)</em>, possible.
+    * <em>Release 03 (Red Mercury Goose)</em>, current
+    * <em>Release 04 (Green Copper Heron)</em>, preferred.
