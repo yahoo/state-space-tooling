@@ -16,8 +16,12 @@ bin_pct_SOURCES = \
   obj/src/app/tooling/main.cpp \
   obj/src/app/tooling/Configuration.cpp \
   $(end)
+$(scold_cxxdir)/app/tooling/dependencies.mk: $(bin_pct_SOURCES)
+$(bin_pct_SOURCES) : obj/src/%.cpp : src/%.xcpp
+	$(TF_V_DIS) $(call TF_XCPP2CPP, $^)
+	$(TF_V_DONE) test -e $@
 $(scold_cxxdir)/app/tooling/dependencies.mk:
-	$(TF_V_DIS) $(call TF_DISAGGREGATE, $(bin_pct_SOURCES))
+	$(TF_V_DEP) $(call TF_DEPENDENCIES, $^)
 	$(TF_V_DONE) test -e $@
 include $(scold_cxxdir)/app/tooling/dependencies.mk
 clean-dependencies::

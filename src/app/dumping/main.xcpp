@@ -64,7 +64,7 @@ auto app::dumping::main(c::argv av) -> sys::exits::Code try {
       cfg.raw_mode = true;
     } else {
       error(cfg) << "unknown option " << option << '\n';
-      return sys::exits::CONFIG;
+      return sys::exits::CONFIGURATION;
     }
   }
   auto [locode, location] = [&cfg, &vv]() -> std::tuple<sys::exits::Code, std::filesystem::path> {
@@ -115,7 +115,7 @@ auto app::dumping::version(Configuration const &cfg, std::ostream &out) -> sys::
 }
 auto app::dumping::unknown(Configuration const &cfg, std::string const &cmd) -> sys::exits::Code {
   error(cfg) << "unknown subcommand '" << /*format::q*/ cmd << "'\n";
-  return sys::exits::CONFIG;
+  return sys::exits::CONFIGURATION;
 }
 #import sst.database.Location
 #import sst.database.State

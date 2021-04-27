@@ -132,7 +132,7 @@ auto app::tooling::main(c::argv av) -> sys::exits::Code try {
         notice(cfg) << "probably you need to use a space and the value in the subsequent argument\n";
       }
       error(cfg) << "unknown option " << /*format::q*/ option << '\n';
-      return sys::exits::CONFIG;
+      return sys::exits::CONFIGURATION;
     }
   }
   if (0 == vv.size()) {
@@ -295,7 +295,7 @@ auto app::tooling::history(Configuration &cfg, Argv vv) -> sys::exits::Code {
 }
 auto app::tooling::unknown(Configuration const &cfg, std::string const &cmd) -> sys::exits::Code {
   error(cfg) << "unknown subcommand '" << /*format::q*/ cmd << "'\n";
-  return sys::exits::CONFIG;
+  return sys::exits::CONFIGURATION;
 }
 auto app::tooling::usage(Configuration const &cfg, std::ostream &out, sys::exits::Code code) -> sys::exits::Code {
   auto const default_admin_msp = "/etc/hyperledger/fabric/admin/msp"sv;  // [[FIXTHIS]] put well-known constants like this in namspace defaults
@@ -333,6 +333,6 @@ auto app::tooling::version(Configuration const &cfg, std::ostream &out) -> sys::
 }
 auto app::tooling::invalid(Configuration const &cfg, unsigned count, Argv const &vv) -> sys::exits::Code {
   error(cfg) << "inappropriate number of arguments for " << vv.front() << ", expected " << count << " but found " << vv.size() << '\n';
-  return sys::exits::CONFIG;
+  return sys::exits::CONFIGURATION;
 }
 #endiv

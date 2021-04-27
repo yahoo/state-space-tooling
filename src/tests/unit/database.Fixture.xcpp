@@ -21,6 +21,12 @@ private:
 #endiv
 #divert <cpp>
 #import sst.database.Location
+//
+// Witness:
+// src/tests/unit/database.Fixture.xcpp:39:75: warning: ‘level::db2::Slice::operator std::string_view() const’ is deprecated: instead use level::db2::as<std::string_view>(Slice) [-Wdeprecated-declarations]
+//
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 auto tests::unit::database::Fixture::test_Location() -> void {
   ::sst::database::Location subject{"/var/hyperledger/fabric"};
   auto probed = subject.probe();
@@ -142,4 +148,5 @@ auto tests::unit::database::Fixture::suite() -> cppunit::Test * {
     ;
   return series.release();
 }
+#pragma GCC diagnostic pop
 #endiv

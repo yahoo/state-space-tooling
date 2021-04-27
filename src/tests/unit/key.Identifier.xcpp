@@ -132,46 +132,47 @@ auto tests::unit::key::Identifier::test_format_hilo() -> void {
   auto const expected = "10110111011111111011000000001111000000000000000000000000000000001011000000001111101101110111111100000000000000000000000000000000"s;
   CPPUNIT_ASSERT_EQUAL(expected, actual);
 }
-#import unit.rigging.suite.Stream
-#import unit.rigging.suite.call
-#import unit.rigging.suite.add
+#import rigging.suite.io
 auto tests::unit::key::Identifier::suite() -> cppunit::Test * {
-  using namespace ::unit::rigging::suite;
-  Stream series("Identifier");
-  {
-    Stream con("constructor");
-    {
-      Stream def("default");
-      def << call("basic", &Identifier::test_constructor_default_basic)
-          << call("zero", &Identifier::test_constructor_default_zero)
-        ;
-      con << add(def.release());
-    } {
-      Stream uui("uui");
-      uui << call("basic", &Identifier::test_constructor_uuid_basic)
-          << call("zero", &Identifier::test_constructor_uuid_zero)
-        ;
-      con << add(uui.release());
-    } {
-      Stream hil("hilo");
-      hil << call("basic", &Identifier::test_constructor_hilo_basic)
-          << call("zero", &Identifier::test_constructor_hilo_zero)
-        ;
-      con << add(hil.release());
-    }
-    series << add(con.release());
-  }
-  series << call("operator==", &Identifier::test_operator_eq)
+  using namespace rigging::suite;
+  auto series = Stream{"Identifier"};
+  series << []{
+              auto con = Stream{"constructor"};
+              con << []{
+                       auto def = Stream{"default"};
+                       def << call("basic", &Identifier::test_constructor_default_basic)
+                           << call("zero", &Identifier::test_constructor_default_zero)
+                           << END;
+                       return move(def);
+                     }()
+                  << []{
+                       auto uui = Stream{"uui"};
+                       uui << call("basic", &Identifier::test_constructor_uuid_basic)
+                           << call("zero", &Identifier::test_constructor_uuid_zero)
+                           << END;
+                       return move(uui);
+                     }()
+                  << []{
+                       auto hil = Stream{"hilo"};
+                       hil << call("basic", &Identifier::test_constructor_hilo_basic)
+                           << call("zero", &Identifier::test_constructor_hilo_zero)
+                           << END;
+                       return move(hil);
+                     }()
+                  << END;
+              return move(con);
+            }()
+         << call("operator==", &Identifier::test_operator_eq)
          << call("operator!=", &Identifier::test_operator_ne)
-    ;
-  {
-    Stream frm("format");
-    frm << call("zero", &Identifier::test_format_zero)
-        << call("random", &Identifier::test_format_random)
-        << call("hilo", &Identifier::test_format_hilo)
-      ;
-    series << add(frm.release());
-  }
-  return series.release();
+         << []{
+              auto frm = Stream{"format"};
+              frm << call("zero", &Identifier::test_format_zero)
+                  << call("random", &Identifier::test_format_random)
+                  << call("hilo", &Identifier::test_format_hilo)
+                  << END;
+              return move(frm);
+            }()
+         << END;
+  return finalize(series);
 }
 #endiv
