@@ -1,7 +1,7 @@
 # State Space, Tooling
 
 This repository contains the operability tooling for the State Space reference implementation of the IAB PrivacyChain Technology Specification.
-It comprises loaders, dumpers and debugging machinery, nearly all of which are cli-oriented and script-kid focused.
+It comprises loaders, dumpers and debugging machinery, nearly all of which are command-line interface (cli-oriented) and script-kid focused.
 
 The main body of documentation for the State Space reference implementation of the IAB PrivacyChain Technology Specification can be found with the [packaging](https://github.com/yahoo/state-space-packaging]).  The overview and administrative declarations herein are necessarily summary in nature. The declarations and definitions in the packaging area are complete and should be interpreted as superceding these when the two are in conflict.
 
@@ -28,9 +28,9 @@ about the scope and purpose of the State Space implementation of the IAB Privacy
 ## Background
 
 This project contains the offline and batch tools necesary to maintain the PrivacyChain database replicas.  These are at least:
-* backing up the ledger
-* dumping out the ledger
-* various <em>ad hoc</em> database maintenance poerations.
+* backing up the database (ledger).
+* dumping out the database (ledger).
+* various <em>ad hoc</em> database maintenance operations.
 
 Further details about that system can be found with the [overview](https://github.com/yahoo/state-space-packaging]) of the State Space project.
 
@@ -41,10 +41,10 @@ The [configuration](#configuration) step will check for many but not all require
 Generally, the dependencies are among:
 - The Hyperledger Fabric database and its Public Key Infrastructure (PKI) services.
 - Various components of the Tunitas system; <em>e.g.</em> the [Basic Components](https://github.com/yahoo/tunitas-basic).
-- A modern (C++2a) development environment.
-- A recent Fedora, but any recent Linux distro should suffice.
+- A modern C++ development environment, meaning C++20 or C++23, C++2b where available.
+- A recent Fedora, <em>e.g.</em>, Fedora 35 will suffice but any recent Linux distro should suffice.
 
-The State Space project was developed on Fedora 27 through Fedora 30 using GCC 7 and GCC 8 with `-fconcepts` and at least `-std=c++1z`.  More details on the development environment and the build system can be found in [temerarious-flagship](https://github.com/yahoo/temerarious-flagship/blob/master/README.md).
+The State Space project was developed on Fedora 27 through Fedora 34 using GCC.  At this juncture, GCC 12 is preferred, though GCC 11 is the minimum requirement.  Because the development started with GCC 7 &amp; GCC 8 using `-fconcepts` and `-std=c++1z`, there are still remnants of older compilers and older versions of C++ throughout the code base..  More details on the expected development environment and the build system can be found in [temerarious-flagship](https://github.com/yahoo/temerarious-flagship/blob/master/README.md).
 
 ## Installation
 
@@ -87,7 +87,8 @@ echo OK DONE
 
 ## Usage
 
-The command line tools produced in the build process each have their own `--help` options and an associated manual page which is created by `help2man`.  For example the tool privacy chain database query tool `pct` has `pct --help`.
+The command line tools produced in the build process each have their own `--help` options and an associated documentation.  These are frequently is maintaned through the use of `help2man`.  For example the tool privacy chain database query tool `pct` is self-explanatory via `pct --help`.
+
 
 ### Database Primary Key Construction
 
@@ -109,7 +110,7 @@ Please refer to the overall [Security Notice](https://github.com/yahoo/state-spa
 
 ## Contribute
 
-Please refer to [the contributing.md file](Contributing.md) for information about how to get involved. We welcome issues, questions, and pull requests. Pull Requests are welcome.
+Please refer to the [contribution instructions](Contributing.md) for information about how to get involved. We welcome issues, questions. Pull Requests are welcome.
 
 ## Maintainers
 - Wendell Baker <wbaker@verizonmedia.com>
